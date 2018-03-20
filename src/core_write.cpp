@@ -139,13 +139,27 @@ void ScriptPubKeyToUniv(const CScript& scriptPubKey,
         return;
     }
 
-    out.pushKV("reqSigs", nRequired);
-    out.pushKV("type", GetTxnOutputType(type));
+    out.push_back(Pair("reqSigs", nRequired));
+    out.push_back(Pair("type", GetTxnOutputType(type)));
 
-    UniValue a(UniValue::VARR);
-    BOOST_FOREACH(const CTxDestination& addr, addresses)
-        a.push_back(CNavCoinAddress(addr).ToString());
-    out.pushKV("addresses", a);
+    if (type == TX_PAYMENTREQUESTNOVOTE || type == TX_PAYMENTREQUESTYESVOTE
+                 || type == TX_PROPOSALNOVOTE || type == TX_PROPOSALYESVOTE)
+    {
+        vector<std::vector<unsigned char>> vSolutions;
+        txnouttype whichType;
+
+        if (Solver(scriptPubKey, whichType, vSolutions))
+        {
+            out.push_back(Pair("hash", uint256(vSolutions[0]).ToString()));
+        }
+    }
+    else
+    {
+        UniValue a(UniValue::VARR);
+        BOOST_FOREACH(const CTxDestination& addr, addresses)
+            a.push_back(CNavCoinAddress(addr).ToString());
+        out.push_back(Pair("addresses", a));
+    }
 }
 
 void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry)
@@ -153,6 +167,7 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry)
     entry.pushKV("txid", tx.GetHash().GetHex());
     entry.pushKV("version", tx.nVersion);
     entry.pushKV("locktime", (int64_t)tx.nLockTime);
+    entry.pushKV("time", (int64_t)tx.nTime);
 
     UniValue vin(UniValue::VARR);
     BOOST_FOREACH(const CTxIn& txin, tx.vin) {
