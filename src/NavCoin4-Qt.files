@@ -82,6 +82,8 @@ netbase.cpp
 netbase.h
 noui.cpp
 noui.h
+ntpclient.cpp
+ntpclient.h
 pos.cpp
 pos.h
 pow.cpp
