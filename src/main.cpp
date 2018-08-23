@@ -3429,6 +3429,10 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
     // Update chainActive and related variables.
     UpdateTip(pindexDelete->pprev, chainparams);
 
+    std::vector<CFund::CProposal> vecProposal;
+     std::vector<pair<uint256,CFund::CProposal>> vPropsalsToUpdate;
+    CFund::CProposal propsal;
+
     std::vector<CFund::CPaymentRequest> vecPaymentRequest;
     std::vector<pair<uint256,CFund::CPaymentRequest>> vPRequestsToUpdate;
     CFund::CPaymentRequest prequest;
@@ -3446,6 +3450,23 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
             AbortNode(state, "Failed to write payment request index");
         }
     }
+
+    if(pblocktree->GetProposalIndex(vecProposal)){
+
+         for(unsigned int i = 0; i < vecProposal.size(); i++) {
+             propsal = vecProposal[i];
+
+             if(propsal.blockhash == pindexDelete->GetBlockHash()) {
+                 vPropsalsToUpdate.push_back(make_pair(propsal.hash, propsal));
+             }
+
+             if (!pblocktree->UpdateProposalIndex(vPropsalsToUpdate)) {
+                 AbortNode(state, "Failed to write propsal request index");
+             }
+         }
+
+    }
+
 
     CountVotes(state, pindexDelete->pprev, true);
 
@@ -4037,8 +4058,21 @@ bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, C
     // add it again.
     BlockMap::iterator it = mapBlockIndex.begin();
     while (it != mapBlockIndex.end()) {
-        if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx && !setBlockIndexCandidates.value_comp()(it->second, chainActive.Tip())) {
-            setBlockIndexCandidates.insert(it->second);
+        //if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx && !setBlockIndexCandidates.value_comp()(it->second, chainActive.Tip())) {
+
+
+        if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS)) {
+
+            if(it->second->nChainTx) {
+
+                if (!setBlockIndexCandidates.value_comp()(it->second, chainActive.Tip())) {
+
+                     setBlockIndexCandidates.insert(it->second);
+
+                }
+            }
+
+
         }
         it++;
     }
@@ -5581,6 +5615,7 @@ void static CheckBlockIndex(const Consensus::Params& consensusParams)
         if (pindex->nChainTx == 0) assert(pindex->nSequenceId == 0);  // nSequenceId can't be set for blocks that aren't linked
         // VALID_TRANSACTIONS is equivalent to nTx > 0 for all nodes (whether or not pruning has occurred).
         // HAVE_DATA is only equivalent to nTx > 0 (or VALID_TRANSACTIONS) if no pruning has occurred.
+        if (!fHavePruned) {
         if (!fHavePruned) {
             // If we've never pruned, then HAVE_DATA should be equivalent to nTx > 0
             assert(!(pindex->nStatus & BLOCK_HAVE_DATA) == (pindex->nTx == 0));
