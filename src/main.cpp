@@ -3430,7 +3430,7 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
     UpdateTip(pindexDelete->pprev, chainparams);
 
     std::vector<CFund::CProposal> vecProposal;
-     std::vector<pair<uint256,CFund::CProposal>> vPropsalsToUpdate;
+    std::vector<pair<uint256,CFund::CProposal>> vProposalsToUpdate;
     CFund::CProposal propsal;
 
     std::vector<CFund::CPaymentRequest> vecPaymentRequest;
@@ -3457,10 +3457,10 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
              propsal = vecProposal[i];
 
              if(propsal.blockhash == pindexDelete->GetBlockHash()) {
-                 vPropsalsToUpdate.push_back(make_pair(propsal.hash, propsal));
+                 vProposalsToUpdate.push_back(make_pair(propsal.hash, propsal));
              }
 
-             if (!pblocktree->UpdateProposalIndex(vPropsalsToUpdate)) {
+             if (!pblocktree->UpdateProposalIndex(vProposalsToUpdate)) {
                  AbortNode(state, "Failed to write propsal request index");
              }
          }
