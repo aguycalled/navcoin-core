@@ -3453,6 +3453,10 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
     // Update chainActive and related variables.
     UpdateTip(pindexDelete->pprev, chainparams);
 
+    std::vector<CFund::CProposal> vecProposal;
+    std::vector<pair<uint256,CFund::CProposal>> vProposalsToUpdate;
+    CFund::CProposal propsal;
+
     std::vector<CFund::CPaymentRequest> vecPaymentRequest;
     std::vector<pair<uint256,CFund::CPaymentRequest>> vPRequestsToUpdate;
     CFund::CPaymentRequest prequest;
@@ -3470,6 +3474,23 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
             AbortNode(state, "Failed to write payment request index");
         }
     }
+
+    if(pblocktree->GetProposalIndex(vecProposal)){
+
+         for(unsigned int i = 0; i < vecProposal.size(); i++) {
+             propsal = vecProposal[i];
+
+             if(propsal.blockhash == pindexDelete->GetBlockHash()) {
+                 vProposalsToUpdate.push_back(make_pair(propsal.hash, propsal));
+             }
+
+             if (!pblocktree->UpdateProposalIndex(vProposalsToUpdate)) {
+                 AbortNode(state, "Failed to write propsal request index");
+             }
+         }
+
+    }
+
 
     CountVotes(state, pindexDelete->pprev, true);
 
@@ -4061,8 +4082,21 @@ bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, C
     // add it again.
     BlockMap::iterator it = mapBlockIndex.begin();
     while (it != mapBlockIndex.end()) {
-        if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx && !setBlockIndexCandidates.value_comp()(it->second, chainActive.Tip())) {
-            setBlockIndexCandidates.insert(it->second);
+        //if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx && !setBlockIndexCandidates.value_comp()(it->second, chainActive.Tip())) {
+
+
+        if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS)) {
+
+            if(it->second->nChainTx) {
+
+                if (!setBlockIndexCandidates.value_comp()(it->second, chainActive.Tip())) {
+
+                     setBlockIndexCandidates.insert(it->second);
+
+                }
+            }
+
+
         }
         it++;
     }
