@@ -81,6 +81,7 @@ struct Params {
     int64_t nProposalMinimalFee;
     int nBlockSpreadCFundAccumulation;
     CAmount nCommunityFundAmount;
+    CAmount nCommunityFundDoubleAmount;
     unsigned int nCyclesProposalVoting;
     unsigned int nCyclesPaymentRequestVoting;
     int nPaymentRequestMaxVersion;

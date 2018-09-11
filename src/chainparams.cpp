@@ -116,6 +116,7 @@ public:
         consensus.nCoinbaseTimeActivationHeight = 20000;
         consensus.nBlockSpreadCFundAccumulation = 500;
         consensus.nCommunityFundAmount = 0.25 * COIN;
+        consensus.nCommunityFundDoubleAmount = 0.5 * COIN;
         consensus.nCyclesProposalVoting = 4;
         consensus.nCyclesPaymentRequestVoting = 4;
         consensus.nPaymentRequestMaxVersion = 2;
@@ -277,6 +278,7 @@ public:
         consensus.nCoinbaseTimeActivationHeight = 30000;
         consensus.nBlockSpreadCFundAccumulation = 500;
         consensus.nCommunityFundAmount = 0.25 * COIN;
+        consensus.nCommunityFundDoubleAmount = 0.5 * COIN;
         consensus.nCyclesProposalVoting = 4;
         consensus.nCyclesPaymentRequestVoting = 4;
         consensus.nPaymentRequestMaxVersion = 2;
@@ -423,6 +425,7 @@ public:
         consensus.nCoinbaseTimeActivationHeight = 0;
         consensus.nBlockSpreadCFundAccumulation = 500;
         consensus.nCommunityFundAmount = 0.25 * COIN;
+        consensus.nCommunityFundDoubleAmount = 0.5 * COIN;
         consensus.nCyclesProposalVoting = 4;
         consensus.nCyclesPaymentRequestVoting = 4;
         consensus.nPaymentRequestMaxVersion = 2;
@@ -579,6 +582,7 @@ public:
         consensus.nCoinbaseTimeActivationHeight = 0;
         consensus.nBlockSpreadCFundAccumulation = 500;
         consensus.nCommunityFundAmount = 0.25 * COIN;
+        consensus.nCommunityFundDoubleAmount = 0.5 * COIN;
         consensus.nCyclesProposalVoting = 4;
         consensus.nCyclesPaymentRequestVoting = 4;
         consensus.nPaymentRequestMaxVersion = 2;
