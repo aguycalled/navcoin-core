@@ -17,22 +17,24 @@ void CFund::SetScriptForCommunityFundContribution(CScript &script)
 
 void CFund::SetScriptForProposalVote(CScript &script, uint256 proposalhash, bool vote)
 {
-    script.resize(36);
+    script.resize(37);
     script[0] = OP_RETURN;
     script[1] = OP_CFUND;
     script[2] = OP_PROP;
     script[3] = vote ? OP_YES : OP_NO;
-    memcpy(&script[4], proposalhash.begin(), 32);
+    script[4] = 0x20;
+    memcpy(&script[5], proposalhash.begin(), 32);
 }
 
 void CFund::SetScriptForPaymentRequestVote(CScript &script, uint256 prequesthash, bool vote)
 {
-    script.resize(36);
+    script.resize(37);
     script[0] = OP_RETURN;
     script[1] = OP_CFUND;
     script[2] = OP_PREQ;
     script[3] = vote ? OP_YES : OP_NO;
-    memcpy(&script[4], prequesthash.begin(), 32);
+    script[4] = 0x20;
+    memcpy(&script[5], prequesthash.begin(), 32);
 }
 
 bool CFund::FindProposal(string propstr, CFund::CProposal &proposal)
@@ -326,7 +328,7 @@ bool CFund::IsValidProposal(CTransaction tx)
             nVersion <= Params().GetConsensus().nProposalMaxVersion);
 
     if (!ret)
-        return error("%s: Wrong strdzeel %s for proposal %s: %s", __func__, tx.strDZeel.c_str(), tx.GetHash().ToString());
+        return error("%s: Wrong strdzeel %s for proposal %s", __func__, tx.strDZeel.c_str(), tx.GetHash().ToString());
 
     return true;
 
@@ -363,7 +365,7 @@ bool CFund::CProposal::IsExpired(uint32_t currentTime) const {
 
         CBlockIndex* pblockindex = mapBlockIndex[blockhash];
 
-        return (pblockindex->GetMedianTimePast() + nDeadline < currentTime);
+        return (pblockindex->GetBlockTime() + nDeadline < currentTime);
     } else {
         return (nDeadline < currentTime);
     }
@@ -372,6 +374,7 @@ bool CFund::CProposal::IsExpired(uint32_t currentTime) const {
 void CFund::CProposal::ToJson(UniValue& ret) const {
     ret.push_back(Pair("version", nVersion));
     ret.push_back(Pair("hash", hash.ToString()));
+    ret.push_back(Pair("blockHash", txblockhash.ToString()));
     ret.push_back(Pair("description", strDZeel));
     ret.push_back(Pair("requestedAmount", FormatMoney(nAmount)));
     ret.push_back(Pair("notPaidYet", FormatMoney(GetAvailable())));
@@ -381,7 +384,7 @@ void CFund::CProposal::ToJson(UniValue& ret) const {
         ret.push_back(Pair("proposalDuration", (uint64_t)nDeadline));
         if (fState == ACCEPTED && mapBlockIndex.count(blockhash) > 0) {
             CBlockIndex* pblockindex = mapBlockIndex[blockhash];
-            ret.push_back(Pair("expiresOn", pblockindex->GetMedianTimePast() + (uint64_t)nDeadline));
+            ret.push_back(Pair("expiresOn", pblockindex->GetBlockTime() + (uint64_t)nDeadline));
         }
     } else {
         ret.push_back(Pair("expiresOn", (uint64_t)nDeadline));
@@ -389,7 +392,8 @@ void CFund::CProposal::ToJson(UniValue& ret) const {
     ret.push_back(Pair("votesYes", nVotesYes));
     ret.push_back(Pair("votesNo", nVotesNo));
     ret.push_back(Pair("votingCycle", (uint64_t)nVotingCycle));
-    ret.push_back(Pair("status", GetState(pindexBestHeader->GetMedianTimePast())));
+    ret.push_back(Pair("status", GetState(chainActive.Tip()->GetBlockTime())));
+    ret.push_back(Pair("state", (uint64_t)fState));
     if(fState == ACCEPTED)
         ret.push_back(Pair("approvedOnBlock", blockhash.ToString()));
     if(vPayments.size() > 0) {
@@ -409,12 +413,14 @@ void CFund::CProposal::ToJson(UniValue& ret) const {
 void CFund::CPaymentRequest::ToJson(UniValue& ret) const {
     ret.push_back(Pair("version", nVersion));
     ret.push_back(Pair("hash", hash.ToString()));
+    ret.push_back(Pair("blockHash", txblockhash.ToString()));
     ret.push_back(Pair("description", strDZeel));
     ret.push_back(Pair("requestedAmount", FormatMoney(nAmount)));
     ret.push_back(Pair("votesYes", nVotesYes));
     ret.push_back(Pair("votesNo", nVotesNo));
     ret.push_back(Pair("votingCycle", (uint64_t)nVotingCycle));
     ret.push_back(Pair("status", GetState()));
+    ret.push_back(Pair("state", (uint64_t)fState));
     if(fState == ACCEPTED) {
         ret.push_back(Pair("approvedOnBlock", blockhash.ToString()));
         ret.push_back(Pair("paidOnBlock", paymenthash.ToString()));
