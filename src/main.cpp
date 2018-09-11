@@ -2492,6 +2492,9 @@ int32_t ComputeBlockVersion(const CBlockIndex* pindexPrev, const Consensus::Para
     if(IsCommunityFundAccumulationSpreadEnabled(pindexPrev,Params().GetConsensus()))
         nVersion |= nCFundAccSpreadVersionMask;
 
+    if(IsCommunityFundAmountV2Enabled(pindexPrev,Params().GetConsensus()))
+        nVersion |= nCFundAmountV2Mask;
+
     return nVersion;
 }
 
@@ -4540,6 +4543,12 @@ bool IsCommunityFundAccumulationEnabled(const CBlockIndex* pindexPrev, const Con
     LOCK(cs_main);
     return (IsCommunityFundEnabled(pindexPrev, params) && !fStrict) ||
           (VersionBitsState(pindexPrev, params, Consensus::DEPLOYMENT_COMMUNITYFUND_ACCUMULATION, versionbitscache) == THRESHOLD_ACTIVE);
+}
+
+bool IsCommunityFundAmountV2Enabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
+{
+    LOCK(cs_main);
+    return (VersionBitsState(pindexPrev, params, Consensus::DEPLOYMENT_COMMUNITYFUND_AMOUNT_V2, versionbitscache) == THRESHOLD_ACTIVE);
 }
 
 bool IsCommunityFundAccumulationSpreadEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
