@@ -113,6 +113,9 @@ share/NavcoindComparisonTool.jar
 
 !src/leveldb*/Makefile
 
+#Keep the depends make file
+!depends/Makefile
+
 /doc/doxygen/
 
 libnavcoinconsensus.pc
