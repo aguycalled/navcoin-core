@@ -597,7 +597,7 @@ public:
         consensus.nProposalMinimalFee = 10000;
         consensus.sigActivationTime = 0;
         consensus.nCoinbaseTimeActivationHeight = 0;
-        consensus.nBlockSpreadCFundAccumulation = 500;
+        consensus.nBlockSpreadCFundAccumulation = 10;
         consensus.nCommunityFundAmount = 0.25 * COIN;
         consensus.nCommunityFundAmountV2 = 0.5 * COIN;
         consensus.nCyclesProposalVoting = 4;
