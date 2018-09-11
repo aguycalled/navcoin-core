@@ -2900,11 +2900,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                   }
 
 
-                  //set the stake reward and overide if amount v2 is activated
-                  nStakeReward -= Params().GetConsensus().nCommunityFundAmount * nMultiplier;
                   if(IsCommunityFundAmountV2Enabled(pindex->pprev, Params().GetConsensus()))
                   {
                     nStakeReward -= Params().GetConsensus().nCommunityFundAmountV2 * nMultiplier;
+                  } else {
+                    nStakeReward -= Params().GetConsensus().nCommunityFundAmount * nMultiplier;
                   }
 
 
