@@ -113,6 +113,9 @@ share/NavcoindComparisonTool.jar
 
 !src/leveldb*/Makefile
 
+#Keep the depends make file
+!depends/Makefile
+
 /doc/doxygen/
 
 libnavcoinconsensus.pc
@@ -129,3 +132,19 @@ src/secp256k1/build-aux/m4/ltsugar.m4
 src/secp256k1/build-aux/m4/ltversion.m4
 src/secp256k1/build-aux/m4/lt~obsolete.m4
 src/NavCoin4-Qt.creator.user
+
+
+navcoin-core.config
+navcoin-core.creator
+navcoin-core.creator.user
+navcoin-core.files
+navcoin-core.includes
+
+#generated qt files
+ui_getaddresstoreceive.h
+ui_navtechinit.h
+ui_navtechitem.h
+ui_navtechsetup.h
+core
+
+.idea/*
