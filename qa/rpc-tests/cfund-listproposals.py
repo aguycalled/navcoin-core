@@ -128,13 +128,6 @@ class CommunityFundProposalsTest(NavCoinTestFramework):
             time.sleep(0.1)
         return blocks
 
-    def slow_gen2(self, count):
-        n_blocks = self.nodes[0].getblockcount()
-        blocks = self.nodes[0].generate(count)
-        while self.nodes[0].getblockcount() < n_blocks + count:
-            time.sleep(0.1)
-        return blocks
-
 
 if __name__ == '__main__':
     CommunityFundProposalsTest().main()
