@@ -4,7 +4,7 @@
 
 
 
-## Allow users to reject specific version bits 
+## Reject specific version bits 
 This release introduces the concept of bit version rejection. 
 
 It is designed to make it easier for the network to reject individual soft forks when they are bundled together in 1 release. As soft forks come within the software signaling by default only the converse was needed for people to reject soft forks they did not agree with.
