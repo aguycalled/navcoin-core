@@ -152,7 +152,7 @@ bool IsVersionBitRejected(const Consensus::Params& params, Consensus::Deployment
                 isRejected = true;
 
                 return isRejected;
-                //LogPrint("versionbits", "Reject version bit: %i \n", rBit);
+
            }
          }
      }
