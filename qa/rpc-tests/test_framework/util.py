@@ -639,3 +639,14 @@ def create_lots_of_big_transactions(node, txouts, utxos, fee):
 def get_bip9_status(node, key):
     info = node.getblockchaininfo()
     return info['bip9_softforks'][key]
+
+
+def slow_gen(node, count):
+    total = count
+    blocks = []
+    while total > 0:
+        now = min(total, 10)
+        blocks.extend(node.generate(now))
+        total -= now
+        time.sleep(0.1)
+    return blocks

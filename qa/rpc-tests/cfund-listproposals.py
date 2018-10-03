@@ -38,7 +38,7 @@ class CommunityFundProposalsTest(NavCoinTestFramework):
             "no_vote": self.nodes[0].createproposal(self.nodes[0].getnewaddress(), 1, 3600, "no_vote")["hash"],
             "50_50_vote": self.nodes[0].createproposal(self.nodes[0].getnewaddress(), 1, 3600, "50_50_vote")["hash"],
         }
-        self.slow_gen(1)
+        slow_gen(self.nodes[0] , 1)
 
         # Verify the proposals are now in the proposals list with matching hashes
         desc_lst = []
@@ -59,7 +59,7 @@ class CommunityFundProposalsTest(NavCoinTestFramework):
         assert (set(desc_lst) == set(created_proposals.keys()))
 
         # Move to the 1st voting cycle
-        self.slow_gen(1)
+        slow_gen(self.nodes[0] , 1)
 
         # Verify we are in voting cycle 1 for all the created proposals
         desc_lst = []
@@ -72,7 +72,7 @@ class CommunityFundProposalsTest(NavCoinTestFramework):
         self.nodes[0].proposalvote(created_proposals["pure_yes"], "yes")
         self.nodes[0].proposalvote(created_proposals["pure_no"], "no")
         self.nodes[0].proposalvote(created_proposals["50_50_vote"], "yes")
-        self.slow_gen(int(blocks_per_voting_cycle/2))
+        slow_gen(self.nodes[0] , int(blocks_per_voting_cycle/2))
 
         # Vote for proposals and move to end of the 1st voting cycle
         self.nodes[0].proposalvote(created_proposals["50_50_vote"], "no")
@@ -100,7 +100,7 @@ class CommunityFundProposalsTest(NavCoinTestFramework):
         assert (set(desc_lst) == set(created_proposals.keys()))
 
         # The votingCycle increments on the first block of the new cycle
-        self.slow_gen(1)
+        slow_gen(self.nodes[0] , 1)
         # Verify proposal status and voting cycle for all the created proposals
         desc_lst = []
         for proposal in self.nodes[0].listproposals():
@@ -123,7 +123,7 @@ class CommunityFundProposalsTest(NavCoinTestFramework):
 
         # Create payment request
         payreq0 = self.nodes[0].createpaymentrequest(created_proposals["pure_yes"], 4, "pure_yes_payreq")["hash"]
-        self.slow_gen(1)
+        slow_gen(self.nodes[0], 1)
 
         # Validate the payment request displays
         for proposal in self.nodes[0].listproposals():
@@ -147,35 +147,26 @@ class CommunityFundProposalsTest(NavCoinTestFramework):
                 assert (proposal["paymentRequests"][0]["state"] == 1)
 
     def activate_cfund(self):
-        self.slow_gen(100)
+        slow_gen(self.nodes[0] , 100)
         # Verify the Community Fund is started
         assert (self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "started")
 
-        self.slow_gen(100)
+        slow_gen(self.nodes[0] , 100)
         # Verify the Community Fund is locked_in
         assert (self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "locked_in")
 
-        self.slow_gen(100)
+        slow_gen(self.nodes[0] , 100)
         # Verify the Community Fund is active
         assert (self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "active")
 
     def end_cycle(self):
         # Move to the end of the cycle
-        self.slow_gen(self.nodes[0].cfundstats()["votingPeriod"]["ending"] - self.nodes[0].cfundstats()["votingPeriod"]["current"])
+        slow_gen(self.nodes[0] , self.nodes[0].cfundstats()["votingPeriod"]["ending"] - self.nodes[0].cfundstats()["votingPeriod"]["current"])
 
     def start_new_cycle(self):
         # Move one past the end of the cycle
-        self.slow_gen(self.nodes[0].cfundstats()["votingPeriod"]["ending"] - self.nodes[0].cfundstats()["votingPeriod"]["current"] + 1)
+        slow_gen(self.nodes[0] , self.nodes[0].cfundstats()["votingPeriod"]["ending"] - self.nodes[0].cfundstats()["votingPeriod"]["current"] + 1)
 
-    def slow_gen(self, count):
-        total = count
-        blocks = []
-        while total > 0:
-            now = min(total, 10)
-            blocks.extend(self.nodes[0].generate(now))
-            total -= now
-            time.sleep(0.1)
-        return blocks
 
 
 if __name__ == '__main__':
