@@ -153,6 +153,7 @@ class WalletBackupTest(NavCoinTestFramework):
 
         assert_equal(total, 59808150)
 
+
         #
         # ##
         # # Test restoring spender wallets from backups
