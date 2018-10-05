@@ -78,7 +78,7 @@ class WalletBackupTest(NavCoinTestFramework):
         # Have the miner (node3) mine a block.
         # Must sync mempools before mining.
         sync_mempools(self.nodes)
-        self.nodes[3].generate(1)
+        slow_gen(self.nodes[3], 1)
 
     # As above, this mirrors the original bash test.
     def start_three(self):
@@ -117,42 +117,42 @@ class WalletBackupTest(NavCoinTestFramework):
         slow_gen(self.nodes[0], 100)
         sync_blocks(self.nodes)
 
-        assert_equal(self.nodes[0].getbalance(), 50)
+        assert_equal(self.nodes[0].getbalance(), 59802500)
         assert_equal(self.nodes[1].getbalance(), 50)
         assert_equal(self.nodes[2].getbalance(), 50)
         assert_equal(self.nodes[3].getbalance(), 0)
 
-        # logging.info("Creating transactions")
-        # # Five rounds of sending each other transactions.
-        # for i in range(5):
-        #     self.do_one_round()
-        #
-        # logging.info("Backing up")
-        # tmpdir = self.options.tmpdir
-        # self.nodes[0].backupwallet(tmpdir + "/node0/wallet.bak")
-        # self.nodes[0].dumpwallet(tmpdir + "/node0/wallet.dump")
-        # self.nodes[1].backupwallet(tmpdir + "/node1/wallet.bak")
-        # self.nodes[1].dumpwallet(tmpdir + "/node1/wallet.dump")
-        # self.nodes[2].backupwallet(tmpdir + "/node2/wallet.bak")
-        # self.nodes[2].dumpwallet(tmpdir + "/node2/wallet.dump")
-        #
-        # logging.info("More transactions")
-        # for i in range(5):
-        #     self.do_one_round()
-        #
-        # # Generate 101 more blocks, so any fees paid mature
-        # self.nodes[3].generate(101)
-        # self.sync_all()
-        #
-        # balance0 = self.nodes[0].getbalance()
-        # balance1 = self.nodes[1].getbalance()
-        # balance2 = self.nodes[2].getbalance()
-        # balance3 = self.nodes[3].getbalance()
-        # total = balance0 + balance1 + balance2 + balance3
-        #
-        # # At this point, there are 214 blocks (103 for setup, then 10 rounds, then 101.)
-        # # 114 are mature, so the sum of all wallets should be 114 * 50 = 5700.
-        # assert_equal(total, 5700)
+        logging.info("Creating transactions")
+        # Five rounds of sending each other transactions.
+        for i in range(5):
+            self.do_one_round()
+
+        logging.info("Backing up")
+        tmpdir = self.options.tmpdir
+        self.nodes[0].backupwallet(tmpdir + "/node0/wallet.bak")
+        self.nodes[0].dumpwallet(tmpdir + "/node0/wallet.dump")
+        self.nodes[1].backupwallet(tmpdir + "/node1/wallet.bak")
+        self.nodes[1].dumpwallet(tmpdir + "/node1/wallet.dump")
+        self.nodes[2].backupwallet(tmpdir + "/node2/wallet.bak")
+        self.nodes[2].dumpwallet(tmpdir + "/node2/wallet.dump")
+
+
+        logging.info("More transactions")
+        for i in range(5):
+            self.do_one_round()
+
+        # Generate 101 more blocks, so any fees paid mature
+        slow_gen(self.nodes[3], 101)
+        self.sync_all()
+
+        balance0 = self.nodes[0].getbalance()
+        balance1 = self.nodes[1].getbalance()
+        balance2 = self.nodes[2].getbalance()
+        balance3 = self.nodes[3].getbalance()
+        total = round(balance0 + balance1 + balance2 + balance3)
+
+        assert_equal(total, 59808150)
+
         #
         # ##
         # # Test restoring spender wallets from backups
