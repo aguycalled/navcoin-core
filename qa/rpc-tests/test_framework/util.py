@@ -35,7 +35,7 @@ PORT_MIN = 11000
 # The number of ports to "reserve" for p2p and rpc, each
 PORT_RANGE = 5000
 
-NAVCOIND_PROC_WAIT_TIMEOUT = 60
+NAVCOIND_PROC_WAIT_TIMEOUT = 120
 
 
 class PortSeed:

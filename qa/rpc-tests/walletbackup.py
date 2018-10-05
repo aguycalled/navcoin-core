@@ -90,6 +90,10 @@ class WalletBackupTest(NavCoinTestFramework):
         connect_nodes(self.nodes[2], 3)
         connect_nodes(self.nodes[2], 0)
 
+        self.nodes[0].staking(False)
+        self.nodes[1].staking(False)
+        self.nodes[2].staking(False)
+
     def stop_three(self):
         stop_node(self.nodes[0], 0)
         stop_node(self.nodes[1], 1)
@@ -153,15 +157,13 @@ class WalletBackupTest(NavCoinTestFramework):
 
         assert_equal(total, 59808150)
 
+        ##
+        # Test restoring spender wallets from backups
+        ##
+        #logging.info("Restoring using wallet.dat")
+        #self.stop_three()
+        #self.erase_three()
 
-        #
-        # ##
-        # # Test restoring spender wallets from backups
-        # ##
-        # logging.info("Restoring using wallet.dat")
-        # self.stop_three()
-        # self.erase_three()
-        #
         # # Start node2 with no chain
         # shutil.rmtree(self.options.tmpdir + "/node2/regtest/blocks")
         # shutil.rmtree(self.options.tmpdir + "/node2/regtest/chainstate")
@@ -174,7 +176,7 @@ class WalletBackupTest(NavCoinTestFramework):
         # logging.info("Re-starting nodes")
         # self.start_three()
         # sync_blocks(self.nodes)
-        #
+
         # assert_equal(self.nodes[0].getbalance(), balance0)
         # assert_equal(self.nodes[1].getbalance(), balance1)
         # assert_equal(self.nodes[2].getbalance(), balance2)
