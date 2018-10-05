@@ -132,7 +132,7 @@ testScripts = [
 #    'spentindex.py',
 #    'txindex.py',
 #    'decodescript.py',
-#    'blockchain.py',
+   'blockchain.py',
 #    'disablewallet.py',
 #    'sendheaders.py',
 #    'keypool.py',
