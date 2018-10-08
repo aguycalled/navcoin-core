@@ -103,7 +103,7 @@ if ENABLE_ZMQ:
 testScripts = [
     # longest test should go first, to favor running tests in parallel
    # 'p2p-fullblocktest.py',
-#    'walletbackup.py',
+   # 'walletbackup.py',
 #    'bip68-112-113-p2p.py',
 #    'wallet.py',
 #    'wallet-hd.py',
@@ -132,7 +132,7 @@ testScripts = [
 #    'spentindex.py',
 #    'txindex.py',
 #    'decodescript.py',
-#    'blockchain.py',
+   'blockchain.py',
 #    'disablewallet.py',
 #    'sendheaders.py',
 #    'keypool.py',

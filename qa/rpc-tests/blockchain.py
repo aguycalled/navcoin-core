@@ -19,6 +19,7 @@ from test_framework.util import (
     assert_is_hash_string,
     start_nodes,
     connect_nodes_bi,
+    slow_gen
 )
 
 
@@ -49,14 +50,16 @@ class BlockchainTest(NavCoinTestFramework):
 
     def _test_gettxoutsetinfo(self):
         node = self.nodes[0]
+        blocks = slow_gen(node, 100)
+
         res = node.gettxoutsetinfo()
 
-        assert_equal(res['total_amount'], Decimal('8725.00000000'))
-        assert_equal(res['transactions'], 200)
-        assert_equal(res['height'], 200)
-        assert_equal(res['txouts'], 200)
-        assert_equal(res['bytes_serialized'], 13924),
-        assert_equal(len(res['bestblock']), 64)
+        assert_equal(res['total_amount'], Decimal('59804950.00000000'))
+        assert_equal(res['transactions'], 100)
+        assert_equal(res['height'], 100)
+        assert_equal(res['txouts'], 100)
+        assert_equal(res['bytes_serialized'], 6903),
+        assert_equal(res['bestblock'], blocks[len(blocks)-1])
         assert_equal(len(res['hash_serialized']), 64)
 
     def _test_getblockheader(self):
@@ -66,11 +69,11 @@ class BlockchainTest(NavCoinTestFramework):
             JSONRPCException, lambda: node.getblockheader('nonsense'))
 
         besthash = node.getbestblockhash()
-        secondbesthash = node.getblockhash(199)
+        secondbesthash = node.getblockhash(99)
         header = node.getblockheader(besthash)
 
         assert_equal(header['hash'], besthash)
-        assert_equal(header['height'], 200)
+        assert_equal(header['height'], 100)
         assert_equal(header['confirmations'], 1)
         assert_equal(header['previousblockhash'], secondbesthash)
         assert_is_hex_string(header['chainwork'])
