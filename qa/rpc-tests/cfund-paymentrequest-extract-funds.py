@@ -78,7 +78,7 @@ class CommunityFundPaymentRequestExtractFundsTest(NavCoinTestFramework):
                 allAccepeted = False
 
         # not all the payment requests should have been validated
-        assert(allAccepeted == False)
+        assert(allAccepeted is False)
 
 
         # create a new propsal and test for the funds extraction edge case described
@@ -108,10 +108,7 @@ class CommunityFundPaymentRequestExtractFundsTest(NavCoinTestFramework):
                 allAccepeted = False
 
         # not all the payment requests should have been validated
-        assert(allAccepeted == False)
-
-        print(self.nodes[0].listproposals())
-
+        assert(allAccepeted is False)
 
 
 
