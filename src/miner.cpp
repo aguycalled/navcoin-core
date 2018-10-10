@@ -270,10 +270,10 @@ CBlockTemplate* BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bo
                         CNavCoinAddress addr(proposal.Address);
                         if (!addr.IsValid())
                             continue;
-                        coinbaseTx.vout.resize(coinbaseTx.vout.size()+1);
-                        coinbaseTx.vout[coinbaseTx.vout.size()-1].scriptPubKey = GetScriptForDestination(addr.Get());
-                        coinbaseTx.vout[coinbaseTx.vout.size()-1].nValue = prequest.nAmount;
-                        strDZeel.push_back(prequest.hash.ToString());
+                        //coinbaseTx.vout.resize(coinbaseTx.vout.size()+1);
+                        //coinbaseTx.vout[coinbaseTx.vout.size()-1].scriptPubKey = GetScriptForDestination(addr.Get());
+                        //coinbaseTx.vout[coinbaseTx.vout.size()-1].nValue = prequest.nAmount;
+                        //strDZeel.push_back(prequest.hash.ToString());
                     } else {
                         LogPrint("cfund", "Could not find parent proposal of payment request %s.\n", prequest.hash.ToString());
                     }
