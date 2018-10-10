@@ -70,7 +70,7 @@ class CommunityFundPaymentRequestStateTest(NavCoinTestFramework):
         assert (float(self.nodes[0].cfundstats()["funds"]["locked"]) == 10)
 
 
-        # Create new payment request for more than the ammount
+        # Create new payment request for more than the amount
         paymentrequestid1 = ""
         try:
             paymentrequestid1 = self.nodes[0].createpaymentrequest(proposalid0, 1000, "payreq1")["hash"]
