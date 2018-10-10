@@ -3008,7 +3008,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
                 proposalIndex.push_back(make_pair(tx.GetHash(),proposal));
 
-                if(proposal.nAmount < 0) {
+                if(proposal.nAmount > 0) {
                     return error("ConnectBlock(): Proposal cannot have an amount less than 0\n");
                 }
 
@@ -3049,7 +3049,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 prequest.nVersion = find_value(metadata, "v").isNum() ? find_value(metadata, "v").get_int() : 1;
                 prequest.txblockhash = block.GetHash();
 
-                if(prequest.nAmount < 0) {
+                if(prequest.nAmount > 0) {
                     return error("ConnectBlock(): Payment request cannot have an amount less than 0\n");
                 }
 
