@@ -44,54 +44,64 @@ class CommunityFundPaymentRequestStateTest(NavCoinTestFramework):
         assert (self.nodes[0].getproposal(proposalid0)["state"] == 1)
         assert (self.nodes[0].getproposal(proposalid0)["status"] == "accepted")
 
-        # Create negative raw payment request and increase unpaid amount
-        self.send_raw_paymentrequest(-1000, address, proposalid0, "test1")
+        # see if we can send a raw negative payment request
+        try:
+            # Create negative raw payment request and increase unpaid amount
+            self.send_raw_paymentrequest(-1000, address, proposalid0, "test1")
+        except JSONRPCException as e:
+            assert("bad-cfund-payment-request" in e.error['message'])
+
 
         # Generate some
         self.slow_gen(1)
 
-        # Vote yes
-        paymentrequestid0 = self.nodes[0].listproposals()[0]['paymentRequests'][0]['hash']
-        self.nodes[0].paymentrequestvote(paymentrequestid0, "yes")
+        # look for the payment request - should not exist
+        paymentrequestid0 = ""
+        try:
+            paymentrequestid0 = self.nodes[0].listproposals()[0]['paymentRequests'][0]['hash']
+        except Exception as e:
+           assert(paymentrequestid0 == "")
+
 
         # Accept payment request
         self.start_new_cycle()
 
-        # Verify it was accepted and the unpaid amount increased
-        assert (self.nodes[0].getpaymentrequest(paymentrequestid0)["state"] == 1)
-        assert (self.nodes[0].getpaymentrequest(paymentrequestid0)["status"] == "accepted")
-        assert (float(self.nodes[0].getproposal(proposalid0)["notPaidYet"]) == 1010)
-        assert (float(self.nodes[0].cfundstats()["funds"]["locked"]) == 1010)
+        # # Verify it was accepted and the unpaid amount increased
+        # assert (self.nodes[0].getpaymentrequest(paymentrequestid0)["state"] == 1)
+        # assert (self.nodes[0].getpaymentrequest(paymentrequestid0)["status"] == "accepted")
+        # assert (float(self.nodes[0].getproposal(proposalid0)["notPaidYet"]) == 1010)
+        assert (float(self.nodes[0].cfundstats()["funds"]["locked"]) == 10)
+
 
         # Create new payment request
-        paymentrequestid1 = self.nodes[0].createpaymentrequest(proposalid0, 1000, "payreq1")["hash"]
-        self.slow_gen(1)
-
-        # Vote yes
-        self.nodes[0].paymentrequestvote(paymentrequestid1, "yes")
-
-        # Start new cycle
-        self.start_new_cycle()
-        for paymentrequest in self.nodes[0].listproposals()[0]['paymentRequests']:
-            self.nodes[0].paymentrequestvote(paymentrequest['hash'], "remove")
-
-        # Wait for maturing
-        self.slow_gen(20)
-
-        # Pay out the positive payment request
-        raw_payment_tx = self.nodes[0].createrawtransaction(
-            [],
-            {address: 1000},
-            "", 0
-        )
-        self.nodes[0].coinbaseoutputs([raw_payment_tx])
-        self.nodes[0].setcoinbasestrdzeel(json.dumps([paymentrequestid1]))
-
-        # Generate block and receive payment
-        payblockhash = self.nodes[0].generate(1)[0]
-
-        # Verify it was paid out
-        assert (self.nodes[0].getpaymentrequest(paymentrequestid1)["paidOnBlock"] == payblockhash)
+        # paymentrequestid1 = self.nodes[0].createpaymentrequest(proposalid0, 1000, "payreq1")["hash"]
+        # self.slow_gen(1)
+        #
+        # # Vote yes
+        # self.nodes[0].paymentrequestvote(paymentrequestid1, "yes")
+        #
+        # # Start new cycle
+        # self.start_new_cycle()
+        # for paymentrequest in self.nodes[0].listproposals()[0]['paymentRequests']:
+        #     self.nodes[0].paymentrequestvote(paymentrequest['hash'], "remove")
+        #
+        # # Wait for maturing
+        # self.slow_gen(20)
+        #
+        # # Pay out the positive payment request
+        # raw_payment_tx = self.nodes[0].createrawtransaction(
+        #     [],
+        #     {address: 1000},
+        #     "", 0
+        # )
+        # self.nodes[0].coinbaseoutputs([raw_payment_tx])
+        # self.nodes[0].setcoinbasestrdzeel(json.dumps([paymentrequestid1]))
+        #
+        # # Generate block and receive payment
+        # payblockhash = self.nodes[0].generate(1)[0]
+        #
+        # # Verify it was paid out
+        # assert (self.nodes[0].getpaymentrequest(paymentrequestid1)["paidOnBlock"] == payblockhash)
 
     def send_raw_paymentrequest(self, amount, address, proposal_hash, description):
         amount = amount * 100000000
