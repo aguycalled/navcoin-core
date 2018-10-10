@@ -66,10 +66,8 @@ class CommunityFundPaymentRequestStateTest(NavCoinTestFramework):
         # Accept payment request
         self.start_new_cycle()
 
-        # # Verify it was accepted and the unpaid amount increased
-        # assert (self.nodes[0].getpaymentrequest(paymentrequestid0)["state"] == 1)
-        # assert (self.nodes[0].getpaymentrequest(paymentrequestid0)["status"] == "accepted")
-        # assert (float(self.nodes[0].getproposal(proposalid0)["notPaidYet"]) == 1010)
+        # # Verify nothing changed
+        assert (float(self.nodes[0].getproposal(proposalid0)["notPaidYet"]) == 10)
         assert (float(self.nodes[0].cfundstats()["funds"]["locked"]) == 10)
 
 
