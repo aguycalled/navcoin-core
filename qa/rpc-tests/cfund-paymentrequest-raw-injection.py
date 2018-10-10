@@ -62,7 +62,6 @@ class CommunityFundPaymentRequestStateTest(NavCoinTestFramework):
         except Exception as e:
            assert(paymentrequestid0 == "")
 
-
         # Accept payment request
         self.start_new_cycle()
 
@@ -71,8 +70,14 @@ class CommunityFundPaymentRequestStateTest(NavCoinTestFramework):
         assert (float(self.nodes[0].cfundstats()["funds"]["locked"]) == 10)
 
 
-        # Create new payment request
-        # paymentrequestid1 = self.nodes[0].createpaymentrequest(proposalid0, 1000, "payreq1")["hash"]
+        # Create new payment request for more than the ammount
+        paymentrequestid1 = ""
+        try:
+            paymentrequestid1 = self.nodes[0].createpaymentrequest(proposalid0, 1000, "payreq1")["hash"]
+        except Exception as e:
+            assert(paymentrequestid1 == "")
+
+
         # self.slow_gen(1)
         #
         # # Vote yes
