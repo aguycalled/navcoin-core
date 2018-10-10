@@ -3012,7 +3012,6 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     return error("ConnectBlock(): Proposal cannot have an amount less than 0\n");
                 }
 
-
                 if (!pblocktree->UpdateProposalIndex(proposalIndex))
                     return AbortNode(state, "Failed to write proposal index");
 
