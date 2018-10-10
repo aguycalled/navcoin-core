@@ -3054,7 +3054,6 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     return error("ConnectBlock(): Payment request cannot have an amount less than 0\n");
                 }
 
-
                 CFund::CProposal proposal;
                 if(!CFund::FindProposal(prequest.proposalhash, proposal))
                     return error("ConnectBlock(): Could not find parent proposal of Payment Request: %s\n",
