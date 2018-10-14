@@ -894,6 +894,19 @@ UniValue gettxoutsetinfo(const UniValue& params, bool fHelp)
 
 UniValue listproposals(const UniValue& params, bool fHelp)
 {
+
+     if (fHelp)
+        throw runtime_error(
+            "listproposals filter\n"
+            "\nList the proposals and all the relating data including payment requests and status.\n"
+            "\nNote passing no argument returns all proposals regardless of state.\n"
+            "\nArguments:\n"
+            "\n1. \"filter\" (string, optional)   \"accepted\" | \"rejected\" | \"expired\" | \"pending\"\n"
+            "\nExamples:\n"
+            + HelpExampleCli("listproposal", "accepted")
+            + HelpExampleRpc("listproposal", "")
+        );
+
     UniValue ret(UniValue::VARR);
 
     bool showAll = true;
@@ -940,6 +953,15 @@ UniValue listproposals(const UniValue& params, bool fHelp)
 
 UniValue cfundstats(const UniValue& params, bool fHelp)
 {
+
+    if (fHelp)
+        throw runtime_error(
+            "cfundstats\n"
+            "\nReturns statistics about the community fund.\n"
+            + HelpExampleCli("cfundstats", "")
+            + HelpExampleRpc("cfundstats", "")
+        );
+
     int nBlocks = (pindexBestHeader->nHeight % Params().GetConsensus().nBlocksPerVotingCycle);
     CBlockIndex* pindexblock = pindexBestHeader;
 
@@ -1007,6 +1029,7 @@ UniValue cfundstats(const UniValue& params, bool fHelp)
     consensus.push_back(Pair("votesRejectProposalPercentage",Params().GetConsensus().nVotesRejectProposal*100));
     consensus.push_back(Pair("votesAcceptPaymentRequestPercentage",Params().GetConsensus().nVotesAcceptPaymentRequest*100));
     consensus.push_back(Pair("votesRejectPaymentRequestPercentage",Params().GetConsensus().nVotesRejectPaymentRequest*100));
+    consensus.push_back(Pair("proposalMinimalFee",ValueFromAmount(Params().GetConsensus().nProposalMinimalFee)));
     ret.push_back(Pair("consensus", consensus));
     UniValue votesProposals(UniValue::VARR);
     UniValue votesPaymentRequests(UniValue::VARR);
@@ -1033,7 +1056,7 @@ UniValue cfundstats(const UniValue& params, bool fHelp)
         UniValue op(UniValue::VOBJ);
         op.push_back(Pair("hash", proposal.hash.ToString()));
         op.push_back(Pair("proposalDesc", proposal.strDZeel));
-        op.push_back(Pair("desc", proposal.strDZeel));
+        op.push_back(Pair("desc", prequest.strDZeel));
         op.push_back(Pair("amount", (float)prequest.nAmount/COIN));
         op.push_back(Pair("yes", it->second.first));
         op.push_back(Pair("no", it->second.second));
@@ -1289,6 +1312,7 @@ UniValue getblockchaininfo(const UniValue& params, bool fHelp)
     BIP9SoftForkDescPushBack(bip9_softforks, "ntpsync", consensusParams, Consensus::DEPLOYMENT_NTPSYNC);
     BIP9SoftForkDescPushBack(bip9_softforks, "coldstaking", consensusParams, Consensus::DEPLOYMENT_COLDSTAKING);
     BIP9SoftForkDescPushBack(bip9_softforks, "spread_cfund_accumulation", consensusParams, Consensus::DEPLOYMENT_COMMUNITYFUND_ACCUMULATION_SPREAD);
+    BIP9SoftForkDescPushBack(bip9_softforks, "communityfund_amount_v2", consensusParams, Consensus::DEPLOYMENT_COMMUNITYFUND_AMOUNT_V2);
     obj.push_back(Pair("softforks",             softforks));
     obj.push_back(Pair("bip9_softforks", bip9_softforks));
 

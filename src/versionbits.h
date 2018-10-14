@@ -44,6 +44,7 @@ static const int32_t VERSIONBITS_NUM_BITS = 29;
 * Bit 8 -> CFUND ACCUMULATION
 * Bit 13 -> COLD STAKING
 * Bit 14 -> C FUND ACCUMULATION SPREAD
+* Bit 16 -< C FUND ACCUMULATION AMOUNT V2
 *
 ***/
 
@@ -53,6 +54,7 @@ static const int32_t nNSyncVersionMask = 0x00000080;
 static const int32_t nCFundAccVersionMask = 0x00001000;
 static const int32_t nColdStakingVersionMask = 0x00002000;
 static const int32_t nCFundAccSpreadVersionMask = 0x00004000;
+static const int32_t nCFundAmountV2Mask = 0x00010000;
 
 enum ThresholdState {
     THRESHOLD_DEFINED,
@@ -102,5 +104,7 @@ struct VersionBitsCache
 
 ThresholdState VersionBitsState(const CBlockIndex* pindexPrev, const Consensus::Params& params, Consensus::DeploymentPos pos, VersionBitsCache& cache);
 uint32_t VersionBitsMask(const Consensus::Params& params, Consensus::DeploymentPos pos);
+bool IsVersionBitRejected(const Consensus::Params& params, Consensus::DeploymentPos pos);
+
 
 #endif
