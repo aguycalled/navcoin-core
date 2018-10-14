@@ -156,6 +156,7 @@ testScripts = [
     'reject-version-bit.py',
     'cfund-create-proposal-rawtx.py',
     'cfund-rawtx-paymentrequest-create.py',
+    'cfund-rawtx-paymentrequest-vote.py',
 ]
 #if ENABLE_ZMQ:
 #    testScripts.append('zmq_test.py')
