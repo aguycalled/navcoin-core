@@ -83,7 +83,6 @@ class CommunityFundCreateProposalRawTX(NavCoinTestFramework):
         self.test_invalid_proposal(self.goodAddress, self.goodAmount, self.goodDuration, 1)
         self.test_invalid_proposal(self.goodAddress, self.goodAmount, self.goodDuration, -1)
 
-
         self.test_valid_description(self.descTxtWhiteSpace, 2)
         self.test_valid_description(self.descTxtMaxLength, 3)
         self.test_valid_description(self.descTxtAllCharsAtoB, 4)
@@ -123,7 +122,6 @@ class CommunityFundCreateProposalRawTX(NavCoinTestFramework):
         # for char in self.descTxtAllCharsAtoE:
         #     i = i + 1
         #     self.test_desc_should_succeed(char, i)
-
 
     def test_invalid_proposal(self, address, amount, duration, description):
 
