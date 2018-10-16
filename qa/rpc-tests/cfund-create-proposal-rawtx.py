@@ -136,34 +136,6 @@ class CommunityFundCreateProposalRawTX(NavCoinTestFramework):
         self.checkGoodPropsal(propsalList[0])
 
 
-    def test_invalid_description(self, descriptionTxt, proposalListLen):
-
-        duration = 360000
-        amount = 100
-
-        # Create new payment request for more than the amount
-        propHash = ""
-        callSucceed = False
-        try:
-            propHash = self.send_raw_propsalrequest(self.goodAddress, amount, duration, descriptionTxt)
-            callSucceed = True
-        except JSONRPCException as e:
-            callSucceed = False
-        except Exception as e:
-            callSucceed = False
-
-        assert(propHash == "")
-        assert(callSucceed is False)
-
-        #check a gen - should still only have the last good prop
-        blocks = slow_gen(self.nodes[0], 1)
-        propsalList = self.nodes[0].listproposals()
-
-        #should still only have 1 proposal from the good test run
-        assert(len(propsalList) == 1)
-        self.checkGoodPropsal(propsalList[0])
-
-
     def test_valid_description(self, descriptionTxt, proposalListLen):
 
         duration = 360000
@@ -189,7 +161,7 @@ class CommunityFundCreateProposalRawTX(NavCoinTestFramework):
         blocks = slow_gen(self.nodes[0], 1)
         propsalList = self.nodes[0].listproposals()
 
-        # should still only have 1 proposal from the good test run
+        # should still only have the correct amount of proposals from the other runs
         assert(len(propsalList) == proposalListLen)
 
         # find the proposal we just made and test the description
@@ -213,14 +185,12 @@ class CommunityFundCreateProposalRawTX(NavCoinTestFramework):
         blocks = slow_gen(self.nodes[0], 1)
         propsalList = self.nodes[0].listproposals()
 
-        #should only have 1 propsal
+        # Should only have 1 proposal
         assert(len(propsalList) == 1)
 
         # The proposal should have all the same required fields
         assert (propsalList[0]['blockHash'] == blocks[0])
         self.checkGoodPropsal(propsalList[0])
-
-
 
     def checkGoodPropsal(self, proposal):
 
