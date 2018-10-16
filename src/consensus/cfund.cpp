@@ -316,9 +316,6 @@ bool CFund::IsValidProposal(CTransaction tx)
         return error("%s: Wrong strdzeel for proposal %s", __func__, tx.GetHash().ToString());
     }
 
-
-
-
     CAmount nAmount = find_value(metadata, "n").get_int64();
     std::string Address = find_value(metadata, "a").get_str();
     int64_t nDeadline = find_value(metadata, "d").get_int64();
