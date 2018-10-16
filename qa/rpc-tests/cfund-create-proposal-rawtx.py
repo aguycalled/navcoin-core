@@ -63,6 +63,8 @@ class CommunityFundCreateProposalRawTX(NavCoinTestFramework):
         self.test_invalid_proposal("NPyEJsv82GaguVsY3Ur4pu4WwnFCsYQ94g", 100, 36000, "I should not work") # nav address we dont own
         self.test_invalid_proposal(False, 100, 36000, "I should not work")
         self.test_invalid_proposal(True, 100, 36000, "I should not work")
+        self.test_invalid_proposal(8888, 100, 36000, "I should not work")
+        self.test_invalid_proposal(-8888, 100, 36000, "I should not work")
 
         # test invalid descriptions
         self.test_invalid_proposal(self.goodAddress, 100, 36000, self.descTxtToLong)
