@@ -57,6 +57,7 @@ class CommunityFundCreateProposalRawTX(NavCoinTestFramework):
         self.test_invalid_proposal(self.goodAddress, self.goodAmount, False, "I should not work")
         self.test_invalid_proposal(self.goodAddress, self.goodAmount, "dsf", "I should not work")
         self.test_invalid_proposal(self.goodAddress, self.goodAmount, "36000", "I should not work")
+        self.test_invalid_proposal(self.goodAddress, self.goodAmount, "", "I should not work")
 
         # test invalid address
         self.test_invalid_proposal("", self.goodAmount, self.goodDuration, "I should not work")
