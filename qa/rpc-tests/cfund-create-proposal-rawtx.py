@@ -124,8 +124,8 @@ class CommunityFundCreateProposalRawTX(NavCoinTestFramework):
         except :
             pass
 
-        #assert(proposal == "")
-        #assert(callSucceed is False)
+        assert(proposal == "")
+        assert(callSucceed is False)
 
         #check a gen - should still only have the last good prop
         blocks = slow_gen(self.nodes[0], 1)
