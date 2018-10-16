@@ -65,7 +65,7 @@ class CommunityFundCreateProposalRawTX(NavCoinTestFramework):
         self.test_invalid_proposal("", self.goodAmount, self.goodDuration, "I should not work")
         self.test_invalid_proposal("a", self.goodAmount, self.goodDuration, "I should not work")
         self.test_invalid_proposal("1KFHE7w8BhaENAswwryaoccDb6qcT6DbYY", self.goodAmount, self.goodDuration, "I should not work") # bitcoin address
-        self.test_invalid_proposal("NPyEJsv82GaguVsY3Ur4pu4WwnFCsYQ94g", self.goodAmount, self.goodDuration, "I should not work") # nav address we dont own
+        self.test_invalid_proposal("NPyEJsv82GaguVsY3Ur4pu4WwnFCsYQ94g", self.goodAmount, self.goodDuration, "I should not work") # nav address we don't own
         self.test_invalid_proposal(False, self.goodAmount, self.goodDuration, "I should not work")
         self.test_invalid_proposal(True, self.goodAmount, self.goodDuration, "I should not work")
         self.test_invalid_proposal(8888, self.goodAmount, self.goodDuration, "I should not work")
