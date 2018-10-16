@@ -46,27 +46,27 @@ class CommunityFundCreateProposalRawTX(NavCoinTestFramework):
         self.test_happy_path()
 
         # test incorrect amounts
-        self.test_invalid_proposal(self.goodAddress, -100, 36000, "I should not work")
-        self.test_invalid_proposal(self.goodAddress, -1, 36000, "I should not work")
-        self.test_invalid_proposal(self.goodAddress, 0, 36000, "I should not work")
+        self.test_invalid_proposal(self.goodAddress, -100, self.goodDuration, "I should not work")
+        self.test_invalid_proposal(self.goodAddress, -1, self.goodDuration, "I should not work")
+        self.test_invalid_proposal(self.goodAddress, 0, self.goodDuration, "I should not work")
 
         # test incorrect duration
-        self.test_invalid_proposal(self.goodAddress, 100, 0, "I should not work")
-        self.test_invalid_proposal(self.goodAddress, 100, -13838, "I should not work")
-        self.test_invalid_proposal(self.goodAddress, 100, "dsf", "I should not work")
-        self.test_invalid_proposal(self.goodAddress, 100, "36000", "I should not work")
+        self.test_invalid_proposal(self.goodAddress, self.goodAmount, 0, "I should not work")
+        self.test_invalid_proposal(self.goodAddress, self.goodAmount, -13838, "I should not work")
+        self.test_invalid_proposal(self.goodAddress, self.goodAmount, "dsf", "I should not work")
+        self.test_invalid_proposal(self.goodAddress, self.goodAmount, "36000", "I should not work")
 
         # test invalid address
-        self.test_invalid_proposal("", 100, 36000, "I should not work")
-        self.test_invalid_proposal("a", 100, 36000, "I should not work")
-        self.test_invalid_proposal("1KFHE7w8BhaENAswwryaoccDb6qcT6DbYY", 100, 36000, "I should not work") # bitcoin address
-        self.test_invalid_proposal("NPyEJsv82GaguVsY3Ur4pu4WwnFCsYQ94g", 100, 36000, "I should not work") # nav address we dont own
-        self.test_invalid_proposal(False, 100, 36000, "I should not work")
-        self.test_invalid_proposal(True, 100, 36000, "I should not work")
-        self.test_invalid_proposal(8888, 100, 36000, "I should not work")
-        self.test_invalid_proposal(-8888, 100, 36000, "I should not work")
-        self.test_invalid_proposal(0, 100, 36000, "I should not work")
-        self.test_invalid_proposal(1, 100, 36000, "I should not work")
+        self.test_invalid_proposal("", self.goodAmount, self.goodDuration, "I should not work")
+        self.test_invalid_proposal("a", self.goodAmount, self.goodDuration, "I should not work")
+        self.test_invalid_proposal("1KFHE7w8BhaENAswwryaoccDb6qcT6DbYY", self.goodAmount, self.goodDuration, "I should not work") # bitcoin address
+        self.test_invalid_proposal("NPyEJsv82GaguVsY3Ur4pu4WwnFCsYQ94g", self.goodAmount, self.goodDuration, "I should not work") # nav address we dont own
+        self.test_invalid_proposal(False, self.goodAmount, self.goodDuration, "I should not work")
+        self.test_invalid_proposal(True, self.goodAmount, self.goodDuration, "I should not work")
+        self.test_invalid_proposal(8888, self.goodAmount, self.goodDuration, "I should not work")
+        self.test_invalid_proposal(-8888, self.goodAmount, self.goodDuration, "I should not work")
+        self.test_invalid_proposal(0, self.goodAmount, self.goodDuration, "I should not work")
+        self.test_invalid_proposal(1, self.goodAmount, self.goodDuration, "I should not work")
 
         # test invalid descriptions
         self.test_invalid_proposal(self.goodAddress, 100, 36000, self.descTxtToLong)
@@ -156,7 +156,7 @@ class CommunityFundCreateProposalRawTX(NavCoinTestFramework):
         print("Test Description: -------------------------")
         print(descriptionTxt)
         try:
-            propHash = self.send_raw_propsalrequest(self.goodAddress, amount, duration, descriptionTxt)
+            propHash = self.send_raw_propsalrequest(self.goodAddress, self.goodAmount, self.goodDuration, descriptionTxt)
             #print(propHash)
         except Exception as e:
             print(e)
