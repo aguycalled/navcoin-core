@@ -44,31 +44,34 @@ class CommunityFundCreatePaymentrequestRawTX(NavCoinTestFramework):
         assert (self.nodes[0].getproposal(proposalid0)["status"] == "accepted")
 
         # Create a good payment request
-        self.send_raw_paymentrequest(1, address, proposalid0, "good_payreq")
+        good_payreq_hash = self.send_raw_paymentrequest(1, address, proposalid0, "good_payreq")
 
         # Create payment request with negative amount
         try:
             self.send_raw_paymentrequest(-10, address, proposalid0, "negative_amount")
+            raise ValueError("Error should be thrown for invalid rawtx (prequest)")
         except JSONRPCException as e:
             assert("bad-cfund-payment-request" in e.error['message'])
 
         # Create payment request with amount too large
         try:
             self.send_raw_paymentrequest(1000, address, proposalid0, "too_large_amount")
+            raise ValueError("Error should be thrown for invalid rawtx (prequest)")
         except JSONRPCException as e:
             assert("bad-cfund-payment-request" in e.error['message'])
 
         # Create payment request with boolean description
         try:
             self.send_raw_paymentrequest(1, address, proposalid0, True)
+            raise ValueError("Error should be thrown for invalid rawtx (prequest)")
         except JSONRPCException as e:
             assert ("bad-cfund-payment-request" in e.error['message'])
 
-        # Create payment request with string amount
-        try:
-            self.send_raw_paymentrequest('10', address, proposalid0, 'string_amount')
-        except JSONRPCException as e:
-            assert ("bad-cfund-payment-request" in e.error['message'])
+#        # Create payment request with string amount
+#        try:
+#            self.send_raw_paymentrequest('1', address, proposalid0, 'string_amount')
+#        except JSONRPCException as e:
+#            assert ("bad-cfund-payment-request" in e.error['message'])
 
         # Generate block
         slow_gen(self.nodes[0], 1)
@@ -76,12 +79,97 @@ class CommunityFundCreatePaymentrequestRawTX(NavCoinTestFramework):
         # Check there exists only 1 good payment request
         assert (len(self.nodes[0].listproposals()[0]['paymentRequests']) == 1)
 
-        # Accept payment request
         self.start_new_cycle()
 
         # # Verify nothing changed
         assert (float(self.nodes[0].getproposal(proposalid0)["notPaidYet"]) == 10)
         assert (float(self.nodes[0].cfundstats()["funds"]["locked"]) == 10)
+
+        # Accept payment request
+        self.nodes[0].paymentrequestvote(good_payreq_hash, "yes")
+        self.start_new_cycle()
+        slow_gen(self.nodes[0], 10)
+
+        # Check the payment request is paid out
+        assert (float(self.nodes[0].getproposal(proposalid0)["notPaidYet"]) == 9)
+        assert (float(self.nodes[0].cfundstats()["funds"]["locked"]) == 9)
+
+
+        # Create multiple payment requests
+        try:
+            self.send_raw_paymentrequest(4, address, proposalid0, "sum_to_too_large_amount0")
+            self.send_raw_paymentrequest(4, address, proposalid0, "sum_to_too_large_amount1")
+            self.send_raw_paymentrequest(4, address, proposalid0, "sum_to_too_large_amount2")
+
+            raise ValueError("Error should be thrown for invalid rawtx (prequest)")
+        except JSONRPCException as e:
+            assert("bad-cfund-payment-request" in e.error['message'])
+
+
+        # Create payment request to somebody else's address
+
+        address_3rd_party = self.nodes[0].getnewaddress()
+        try:
+            self.send_raw_paymentrequest(1, address_3rd_party, proposalid0, "3rd_party_address")
+            raise ValueError("Error should be thrown for invalid rawtx (prequest)")
+        except JSONRPCException as e:
+            assert("bad-cfund-payment-request" in e.error['message'])
+
+
+        # Create and test for expired and rejected proposals
+
+        proposalid1_rejected = self.nodes[0].createproposal(address, 10, 3600, "test_rejected")["hash"]
+        proposalid2_expired_timeout = self.nodes[0].createproposal(address, 10, 1, "test_expired_timeout")["hash"]
+        proposalid3_expired_no_votes = self.nodes[0].createproposal(address, 10, 3600, "test_expired_no_votes")["hash"]
+        self.start_new_cycle()
+
+        # Reject Proposal 1 and accept Proposal 2
+        self.nodes[0].proposalvote(proposalid1_rejected, "no")
+        self.nodes[0].proposalvote(proposalid2_expired_timeout, "yes")
+        self.start_new_cycle()
+
+        # Proposal 1 should be rejected
+        assert (self.nodes[0].getproposal(proposalid1_rejected)["state"] == 2)
+        assert (self.nodes[0].getproposal(proposalid1_rejected)["status"] == "rejected")
+
+        # Create a payment request for a rejected proposal
+        try:
+            self.send_raw_paymentrequest(1, address, proposalid1_rejected, "rejected_payreq")
+            raise ValueError("Error should be thrown for invalid rawtx (prequest)")
+        except JSONRPCException as e:
+            assert ("bad-cfund-payment-request" in e.error['message'])
+
+        time.sleep(1)
+        slow_gen(self.nodes[0], 10)
+
+        # Proposal 2 should be expired
+        assert (self.nodes[0].getproposal(proposalid2_expired_timeout)["status"] == "expired waiting for end of voting period")
+
+        self.start_new_cycle()
+
+        # Create a payment request for an expired proposal
+        try:
+            self.send_raw_paymentrequest(1, address, proposalid2_expired_timeout, "expired_payreq")
+            raise ValueError("Error should be thrown for invalid rawtx (prequest)")
+        except JSONRPCException as e:
+            assert ("bad-cfund-payment-request" in e.error['message'])
+
+        # Let Proposal 3 expire
+        self.start_new_cycle()
+        self.start_new_cycle()
+        self.start_new_cycle()
+
+        # Proposal 3 should be expired
+        assert (self.nodes[0].getproposal(proposalid3_expired_no_votes)["state"] == 3)
+        assert (self.nodes[0].getproposal(proposalid3_expired_no_votes)["status"] == "expired")
+
+        # Create a payment request for an expired proposal
+        try:
+            self.send_raw_paymentrequest(1, address, proposalid3_expired_no_votes, "expired_payreq")
+            raise ValueError("Error should be thrown for invalid rawtx (prequest)")
+        except JSONRPCException as e:
+            assert ("bad-cfund-payment-request" in e.error['message'])
+
 
     def send_raw_paymentrequest(self, amount, address, proposal_hash, description):
         amount = amount * 100000000
@@ -106,7 +194,9 @@ class CommunityFundCreatePaymentrequestRawTX(NavCoinTestFramework):
         raw_payreq_tx = self.nodes[0].signrawtransaction(raw_payreq_tx)['hex']
 
         # Send raw transacion
-        self.nodes[0].sendrawtransaction(raw_payreq_tx)
+        tx_hash = self.nodes[0].sendrawtransaction(raw_payreq_tx)
+
+        return tx_hash
 
     def activate_cfund(self):
         slow_gen(self.nodes[0], 100)
