@@ -21,24 +21,46 @@ class CommunityFundProposalStateRawTXTest(NavCoinTestFramework):
         self.is_network_split = False
 
     def run_test(self):
-        self.slow_gen(100)
+        slow_gen(self.nodes[0], 100)
         # Verify the Community Fund is started
         assert(self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "started")
 
-        self.slow_gen(100)
+        slow_gen(self.nodes[0], 100)
         # Verify the Community Fund is locked_in
         assert(self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "locked_in")
 
-        self.slow_gen(100)
+        slow_gen(self.nodes[0], 100)
         # Verify the Community Fund is active
         assert(self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "active")
 
         proposalid0 = self.nodes[0].createproposal(self.nodes[0].getnewaddress(), 1, 3600, "test")["hash"]
-        self.slow_gen(1)
+        print(proposalid0)
+        slow_gen(self.nodes[0], 100)
 
         self.start_new_cycle()
 
         time.sleep(0.2)
+
+        #send a vote
+        resultList = self.send_raw_propsal_vote_request(proposalid0)
+        blocks = resultList[0]
+        voteHash = resultList[1]
+
+        decodedTx = self.get_transaction_from_block(blocks[0])
+
+        assert (self.is_vote_hash_in_vout(decodedTx, voteHash))
+
+        print(self.nodes[0].listproposals())
+
+
+
+        for x in range(0, 580):
+            self.send_raw_propsal_vote_request(proposalid0)
+
+
+
+            print(self.nodes[0].listproposals())
+            print(self.nodes[0].listproposals())
 
         # # Proposal initial state at beginning of cycle
         #
@@ -154,19 +176,78 @@ class CommunityFundProposalStateRawTXTest(NavCoinTestFramework):
         # assert (self.nodes[0].cfundstats()["funds"]["available"] == self.nodes[0].cfundstats()["consensus"]["proposalMinimalFee"])
         # assert (self.nodes[0].cfundstats()["funds"]["locked"] == 1)
 
+
+    def get_transaction_from_block(self, blochHash):
+
+        block = self.nodes[0].getblock(blochHash)
+
+        tx = self.nodes[0].gettransaction(block['tx'][0])
+
+        decodedTx = self.nodes[0].decoderawtransaction(tx['hex'])
+
+        return decodedTx
+
+    def is_vote_hash_in_vout(self, decodedTx, voteHash):
+
+        vout = decodedTx['vout']
+
+        isInVout = False
+        for tx in vout:
+            if tx['scriptPubKey']['hex'] == voteHash:
+                isInVout = True
+
+        return isInVout
+
+    def send_raw_propsal_vote_request(self, hash):
+
+
+
+        revHash = ""
+        for x in range(-1, -len(hash), -2):
+            revHash += hash[x-1] + hash[x]
+
+
+        print(hash + " -> " + revHash)
+
+
+        voteHash = "6ac1c2c4"+revHash
+
+        print(voteHash)
+
+        raw_vote_tx = self.nodes[0].createrawtransaction(
+            [],
+            {voteHash: 0},
+            "", 0
+        )
+
+
+        d = self.nodes[0].coinbaseoutputs([raw_vote_tx])
+
+        #print(d)
+
+        blocks = slow_gen(self.nodes[0], 1)
+
+        return [blocks, voteHash]
+
+
+        # Modify version
+        # raw_proposal_tx = "04" + raw_proposal_tx[2:]
+        #
+        # # Fund raw transaction
+        # raw_proposal_tx = self.nodes[0].fundrawtransaction(raw_proposal_tx)['hex']
+        #
+        # # Sign raw transaction
+        # raw_proposal_tx = self.nodes[0].signrawtransaction(raw_proposal_tx)['hex']
+
+        # Send raw transaction
+        #return self.nodes[0].sendrawtransaction(raw_proposal_tx)
+
+
+
     def start_new_cycle(self):
         # Move to the end of the cycle
-        self.slow_gen(self.nodes[0].cfundstats()["votingPeriod"]["ending"] - self.nodes[0].cfundstats()["votingPeriod"]["current"])
+        slow_gen(self.nodes[0], self.nodes[0].cfundstats()["votingPeriod"]["ending"] - self.nodes[0].cfundstats()["votingPeriod"]["current"])
         
-    def slow_gen(self, count):
-        total = count
-        blocks = []
-        while total > 0:
-            now = min(total, 5)
-            blocks.extend(self.nodes[0].generate(now))
-            total -= now
-            time.sleep(0.1)
-        return blocks
 
 
 if __name__ == '__main__':
