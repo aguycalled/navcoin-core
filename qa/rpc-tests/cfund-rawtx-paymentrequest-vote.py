@@ -6,9 +6,6 @@
 from test_framework.test_framework import NavCoinTestFramework
 from test_framework.util import *
 
-import json
-import time
-
 
 class CommunityFundVotePaymentrequestRawTX(NavCoinTestFramework):
     """Tests the state transition of payment requests of the Community fund."""
@@ -89,22 +86,22 @@ class CommunityFundVotePaymentrequestRawTX(NavCoinTestFramework):
     def reverse_byte_str(self, hex_str):
         return ''.join([c for t in zip(hex_str[-2::-2], hex_str[::-2]) for c in t])
 
-    def create_vote_tx(self, type, vote, hash):
+    def create_vote_tx(self, vote_type, vote, p_hash):
         """
         Creates voting hex to be included into the coinbase.
         Args:
-            type: proposal:'c2', payment request: 'c3'
+            vote_type: proposal:'c2', payment request: 'c3'
             vote: yes: 'c4', no:'c5'
-            hash: hash of the proposal/payment request
+            p_hash: hash of the proposal/payment request
 
         Returns:
             str: hex data to include into the coinbase
         """
         # Byte-reverse hash
-        reversed_hash = self.reverse_byte_str(hash)
+        reversed_hash = self.reverse_byte_str(p_hash)
 
         # Create voting string
-        vote_str = '6a' + 'c1' + type + vote + '20' + reversed_hash
+        vote_str = '6a' + 'c1' + vote_type + vote + '20' + reversed_hash
 
         # Create raw vote tx
         vote_tx = self.nodes[0].createrawtransaction(
