@@ -157,7 +157,7 @@ testScripts = [
     'cfund-create-proposal-rawtx.py',
     'cfund-rawtx-paymentrequest-create.py',
     'cfund-rawtx-paymentrequest-vote.py',
-    'cfund-rawtx-proposal-state-accept.py'
+    'cfund-rawtx-proposal-vote.py'
 
 ]
 #if ENABLE_ZMQ:
