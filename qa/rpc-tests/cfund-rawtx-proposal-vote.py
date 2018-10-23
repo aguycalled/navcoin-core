@@ -25,7 +25,6 @@ class CommunityFundProposalStateRawTXTest(NavCoinTestFramework):
         self.activate_cfund()
         self.nodes[0].donatefund(1000)
 
-
         # Get address
         address = self.nodes[0].getnewaddress()
 
