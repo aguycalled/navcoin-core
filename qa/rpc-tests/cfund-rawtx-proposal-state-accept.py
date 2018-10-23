@@ -21,46 +21,116 @@ class CommunityFundProposalStateRawTXTest(NavCoinTestFramework):
         self.is_network_split = False
 
     def run_test(self):
-        slow_gen(self.nodes[0], 100)
-        # Verify the Community Fund is started
-        assert(self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "started")
+        # Make sure cfund is active
+        self.activate_cfund()
 
-        slow_gen(self.nodes[0], 100)
-        # Verify the Community Fund is locked_in
-        assert(self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "locked_in")
+        # Get address
+        address = self.nodes[0].getnewaddress()
 
-        slow_gen(self.nodes[0], 100)
-        # Verify the Community Fund is active
-        assert(self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "active")
-
-        proposalid0 = self.nodes[0].createproposal(self.nodes[0].getnewaddress(), 1, 3600, "test")["hash"]
-        print(proposalid0)
-        slow_gen(self.nodes[0], 100)
-
+        proposalid0 = self.nodes[0].createproposal(address, 1, 3600, "test proposal 0")["hash"]
+        proposalid1 = self.nodes[0].createproposal(address, 1, 3600, "test proposal 1")["hash"]
         self.start_new_cycle()
+        slow_gen(self.nodes[0], 1)
 
-        time.sleep(0.2)
+        # pre-flight checks
+        assert (self.nodes[0].getproposal(proposalid0)['votesYes'] == 0)
+        assert (self.nodes[0].getproposal(proposalid0)['votesNo'] == 0)
+        assert (self.nodes[0].getproposal(proposalid1)['votesYes'] == 0)
+        assert (self.nodes[0].getproposal(proposalid1)['votesNo'] == 0)
 
-        #send a vote
-        resultList = self.send_raw_propsal_vote_request(proposalid0)
-        blocks = resultList[0]
-        voteHash = resultList[1]
+        # setup votes
+        prop0_vote_tx_yes = self.create_vote_tx('c2', 'c4', proposalid0)
+        prop0_vote_tx_no = self.create_vote_tx('c2', 'c5', proposalid0)
+        prop1_vote_tx_yes = self.create_vote_tx('c2', 'c4', proposalid1)
+        prop1_vote_tx_no = self.create_vote_tx('c2', 'c5', proposalid1)
 
-        decodedTx = self.get_transaction_from_block(blocks[0])
+        # perform 1 YES vote
+        self.nodes[0].coinbaseoutputs([prop0_vote_tx_yes])
+        slow_gen(self.nodes[0], 1)
 
-        assert (self.is_vote_hash_in_vout(decodedTx, voteHash))
+        assert (self.nodes[0].getproposal(proposalid0)['votesYes'] == 1)
+        assert (self.nodes[0].getproposal(proposalid0)['votesNo'] == 0)
 
-        print(self.nodes[0].listproposals())
-
-
-
-        for x in range(0, 580):
-            self.send_raw_propsal_vote_request(proposalid0)
-
+        assert (self.nodes[0].getproposal(proposalid1)['votesYes'] == 0)
+        assert (self.nodes[0].getproposal(proposalid1)['votesNo'] == 0)
 
 
-            print(self.nodes[0].listproposals())
-            print(self.nodes[0].listproposals())
+        # perform 1 NO vote
+        # perform 1 YES vote
+        self.nodes[0].coinbaseoutputs([prop0_vote_tx_no])
+        slow_gen(self.nodes[0], 1)
+
+        assert (self.nodes[0].getproposal(proposalid0)['votesYes'] == 1)
+        assert (self.nodes[0].getproposal(proposalid0)['votesNo'] == 1)
+
+        assert (self.nodes[0].getproposal(proposalid1)['votesYes'] == 0)
+        assert (self.nodes[0].getproposal(proposalid1)['votesNo'] == 0)
+
+
+        # multiple votes
+        self.nodes[0].coinbaseoutputs([prop0_vote_tx_yes, prop0_vote_tx_yes, prop0_vote_tx_yes, prop0_vote_tx_yes])
+        slow_gen(self.nodes[0], 1)
+        assert (self.nodes[0].getproposal(proposalid0)['votesYes'] == 2)
+        assert (self.nodes[0].getproposal(proposalid0)['votesNo'] == 1)
+
+        assert (self.nodes[0].getproposal(proposalid1)['votesYes'] == 0)
+        assert (self.nodes[0].getproposal(proposalid1)['votesNo'] == 0)
+
+        # multiple yes / no votes
+        self.nodes[0].coinbaseoutputs([prop0_vote_tx_yes, prop0_vote_tx_no, prop0_vote_tx_yes, prop0_vote_tx_no])
+        slow_gen(self.nodes[0], 1)
+        assert (self.nodes[0].getproposal(proposalid0)['votesYes'] == 3)
+        assert (self.nodes[0].getproposal(proposalid0)['votesNo'] == 1)
+
+        assert (self.nodes[0].getproposal(proposalid1)['votesYes'] == 0)
+        assert (self.nodes[0].getproposal(proposalid1)['votesNo'] == 0)
+
+        # Insert YES votes for multiple  propsals
+        self.nodes[0].coinbaseoutputs([prop0_vote_tx_yes, prop1_vote_tx_yes])
+        slow_gen(self.nodes[0], 1)
+        assert (self.nodes[0].getproposal(proposalid0)['votesYes'] == 4)
+        assert (self.nodes[0].getproposal(proposalid0)['votesNo'] == 1)
+
+        assert (self.nodes[0].getproposal(proposalid1)['votesYes'] == 1)
+        assert (self.nodes[0].getproposal(proposalid1)['votesNo'] == 0)
+
+        # Insert NO votes for multiple propsals
+        self.nodes[0].coinbaseoutputs([prop0_vote_tx_no, prop1_vote_tx_no])
+        slow_gen(self.nodes[0], 1)
+        assert (self.nodes[0].getproposal(proposalid0)['votesYes'] == 4)
+        assert (self.nodes[0].getproposal(proposalid0)['votesNo'] == 2)
+
+        assert (self.nodes[0].getproposal(proposalid1)['votesYes'] == 1)
+        assert (self.nodes[0].getproposal(proposalid1)['votesNo'] == 1)
+
+        # Insert bad vote tx with double vote in string
+        pr0_bad_vote_tx = self.create_vote_tx('c3', 'c4c4', proposalid0)
+        self.nodes[0].coinbaseoutputs([pr0_bad_vote_tx])
+        slow_gen(self.nodes[0], 1)
+        assert (self.nodes[0].getproposal(proposalid0)['votesYes'] == 4)
+
+        # time.sleep(0.2)
+        #
+        # #send a vote
+        # resultList = self.send_raw_propsal_vote_request(proposalid0)
+        # blocks = resultList[0]
+        # voteHash = resultList[1]
+        #
+        # decodedTx = self.get_transaction_from_block(blocks[0])
+        #
+        # assert (self.is_vote_hash_in_vout(decodedTx, voteHash))
+        #
+        # print(self.nodes[0].listproposals())
+        #
+        #
+        #
+        # #for x in range(0, 580):
+        #     self.send_raw_propsal_vote_request(proposalid0)
+        #
+        #
+        #
+        #     print(self.nodes[0].listproposals())
+        #     print(self.nodes[0].listproposals())
 
         # # Proposal initial state at beginning of cycle
         #
@@ -198,36 +268,33 @@ class CommunityFundProposalStateRawTXTest(NavCoinTestFramework):
 
         return isInVout
 
-    def send_raw_propsal_vote_request(self, hash):
+    def reverse_byte_str(self, hex_str):
+        return ''.join([c for t in zip(hex_str[-2::-2], hex_str[::-2]) for c in t])
 
+    def create_vote_tx(self, vote_type, vote, p_hash):
+        """
+        Creates voting hex to be included into the coinbase.
+        Args:
+            vote_type: proposal:'c2', payment request: 'c3'
+            vote: yes: 'c4', no:'c5'
+            p_hash: hash of the proposal/payment request
 
+        Returns:
+            str: hex data to include into the coinbase
+        """
+        # Byte-reverse hash
+        reversed_hash = self.reverse_byte_str(p_hash)
 
-        revHash = ""
-        for x in range(-1, -len(hash), -2):
-            revHash += hash[x-1] + hash[x]
+        # Create voting string
+        vote_str = '6a' + 'c1' + vote_type + vote + '20' + reversed_hash
 
-
-        print(hash + " -> " + revHash)
-
-
-        voteHash = "6ac1c2c4"+revHash
-
-        print(voteHash)
-
-        raw_vote_tx = self.nodes[0].createrawtransaction(
+        # Create raw vote tx
+        vote_tx = self.nodes[0].createrawtransaction(
             [],
-            {voteHash: 0},
+            {vote_str: 0},
             "", 0
         )
-
-
-        d = self.nodes[0].coinbaseoutputs([raw_vote_tx])
-
-        #print(d)
-
-        blocks = slow_gen(self.nodes[0], 1)
-
-        return [blocks, voteHash]
+        return vote_tx
 
 
         # Modify version
@@ -247,7 +314,20 @@ class CommunityFundProposalStateRawTXTest(NavCoinTestFramework):
     def start_new_cycle(self):
         # Move to the end of the cycle
         slow_gen(self.nodes[0], self.nodes[0].cfundstats()["votingPeriod"]["ending"] - self.nodes[0].cfundstats()["votingPeriod"]["current"])
-        
+
+    def activate_cfund(self):
+        slow_gen(self.nodes[0], 100)
+        # Verify the Community Fund is started
+        assert (self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "started")
+
+        slow_gen(self.nodes[0], 100)
+        # Verify the Community Fund is locked_in
+        assert (self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "locked_in")
+
+        slow_gen(self.nodes[0], 100)
+        # Verify the Community Fund is active
+        assert (self.nodes[0].getblockchaininfo()["bip9_softforks"]["communityfund"]["status"] == "active")
+
 
 
 if __name__ == '__main__':
