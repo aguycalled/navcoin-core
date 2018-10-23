@@ -57,7 +57,6 @@ class CommunityFundProposalStateRawTXTest(NavCoinTestFramework):
         assert (self.nodes[0].getproposal(proposalid1)['votesNo'] == 0)
 
         # perform 1 NO vote
-        # perform 1 YES vote
         self.nodes[0].coinbaseoutputs([prop0_vote_tx_no])
         slow_gen(self.nodes[0], 1)
 
