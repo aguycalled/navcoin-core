@@ -8,7 +8,7 @@ from test_framework.util import *
 
 import time
 
-class CommunityFundProposalStateRawTXTest(NavCoinTestFramework):
+class CommunityFundRawTXProposalVoteTest(NavCoinTestFramework):
     """Tests the state transition of proposals of the Community fund."""
 
     def __init__(self):
@@ -197,4 +197,4 @@ class CommunityFundProposalStateRawTXTest(NavCoinTestFramework):
 
 
 if __name__ == '__main__':
-    CommunityFundProposalStateRawTXTest().main()
+    CommunityFundRawTXProposalVoteTest().main()
