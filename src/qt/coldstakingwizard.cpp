@@ -55,7 +55,7 @@ GetAddressesPage::GetAddressesPage(QWidget *parent)
     spendingAddressLineEdit = new QLineEdit;
     spendingAddressLabel->setBuddy(spendingAddressLineEdit);
 
-    descriptionLabel = new QLabel(tr("Your Spending address and Staking address must be different."))
+    descriptionLabel = new QLabel(tr("Your Spending address and Staking address must be different addresses."));
 
     QGridLayout *layout = new QGridLayout;
     layout->addWidget(stakingAddressLabel, 0, 0);
