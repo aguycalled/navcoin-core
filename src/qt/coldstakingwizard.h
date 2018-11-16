@@ -48,7 +48,7 @@ class GetAddressesPage : public QWizardPage
 
 public:
     GetAddressesPage(QWidget *parent = 0);
-    bool validatePage();
+    bool isComplete();
 
 private:
     QLabel *spendingAddressLabel;
