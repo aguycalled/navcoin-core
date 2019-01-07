@@ -3990,7 +3990,8 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo)
                         prequest.blockhash = pindexNew->GetBlockHash();
                         fUpdate = true;
                     }
-                } else if(prequest.IsRejected()) {
+                }
+                if(prequest.IsRejected()) {
                     if (prequest.fState != CFund::REJECTED) {
                         prequest.fState = CFund::REJECTED;
                         prequest.blockhash = pindexNew->GetBlockHash();
@@ -4080,7 +4081,8 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo)
                             fUpdate = true;
                         }
                     }
-                } else if(proposal.IsRejected()){
+                }
+                if(proposal.IsRejected()){
                     if(proposal.fState != CFund::REJECTED) {
                         proposal.fState = CFund::REJECTED;
                         proposal.blockhash = pindexNew->GetBlockHash();

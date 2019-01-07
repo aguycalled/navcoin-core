@@ -189,7 +189,7 @@ bool CFund::RemoveVotePaymentRequest(uint256 proposalHash)
 }
 
 bool CFund::IsValidPaymentRequest(CTransaction tx, int nMaxVersion)
-{    
+{
     if(tx.strDZeel.length() > 1024)
         return error("%s: Too long strdzeel for payment request %s", __func__, tx.GetHash().ToString());
 
@@ -261,7 +261,7 @@ bool CFund::IsValidPaymentRequest(CTransaction tx, int nMaxVersion)
     if(nAmount > proposal.GetAvailable(true))
         return error("%s: Invalid requested amount for payment request %s (%d vs %d available)",
                      __func__, tx.GetHash().ToString(), nAmount, proposal.GetAvailable());
-    
+
     bool ret = (nVersion <= nMaxVersion);
 
     if(!ret)
@@ -280,7 +280,7 @@ bool CFund::CPaymentRequest::CanVote() const {
 
 bool CFund::CPaymentRequest::IsExpired() const {
     if(nVersion >= 2)
-        return ( nVotingCycle > Params().GetConsensus().nCyclesPaymentRequestVoting &&
+        return ( nVotingCycle >= Params().GetConsensus().nCyclesPaymentRequestVoting &&
                 fState != ACCEPTED && fState != REJECTED);
     return false;
 }
@@ -390,7 +390,7 @@ bool CFund::CProposal::IsExpired(uint32_t currentTime) const {
             CBlockIndex* pblockindex = mapBlockIndex[blockhash];
             return (pblockindex->GetBlockTime() + nDeadline < currentTime);
         }
-        return (fState == EXPIRED) || (fState == PENDING_VOTING_PREQ) || (nVotingCycle > Params().GetConsensus().nCyclesProposalVoting && (CanVote() || fState == EXPIRED));
+        return (fState == EXPIRED) || (fState == PENDING_VOTING_PREQ) || (nVotingCycle >= Params().GetConsensus().nCyclesProposalVoting && (CanVote() || fState == EXPIRED));
     } else {
         return (nDeadline < currentTime);
     }
@@ -447,7 +447,7 @@ void CFund::CPaymentRequest::ToJson(UniValue& ret) const {
     ret.push_back(Pair("status", GetState()));
     ret.push_back(Pair("state", (uint64_t)fState));
     ret.push_back(Pair("stateChangedOnBlock", blockhash.ToString()));
-    if(fState == ACCEPTED) {        
+    if(fState == ACCEPTED) {
         ret.push_back(Pair("paidOnBlock", paymenthash.ToString()));
     }
 }
