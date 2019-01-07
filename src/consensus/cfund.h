@@ -102,7 +102,7 @@ public:
             if(fState != REJECTED)
                 sFlags += " waiting for end of voting period";
         }
-        if(IsExpired()) {
+        if(!(IsAccepted() || IsRejected()) && IsExpired()) {
             sFlags = "expired";
             if(fState != EXPIRED)
                 sFlags += " waiting for end of voting period";
@@ -241,13 +241,15 @@ public:
             if(fState != REJECTED)
                 sFlags += " waiting for end of voting period";
         }
-        if(currentTime > 0 && IsExpired(currentTime)) {
-            sFlags = "expired";
-            if(fState != EXPIRED)
-                sFlags += " waiting for end of voting period";
-        }
-        if(fState == PENDING_VOTING_PREQ) {
-            sFlags = "expired pending voting of payment requests";
+        if(!(IsAccepted() || IsRejected())) {
+            if (currentTime > 0 && IsExpired(currentTime)) {
+                sFlags = "expired";
+                if(fState != EXPIRED)
+                    sFlags += " waiting for end of voting period";
+            }
+            if(fState == PENDING_VOTING_PREQ) {
+                sFlags = "expired pending voting of payment requests";
+            }
         }
         return sFlags;
     }
