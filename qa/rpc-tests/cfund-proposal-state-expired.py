@@ -37,7 +37,7 @@ class CommunityFundProposalStateTest(NavCoinTestFramework):
         # Move the necessary amount of cycles for the proposal to expire
         i = 0
         necessary = self.nodes[0].cfundstats()["consensus"]["maxCountVotingCycleProposals"]
-        while i < necessary:
+        while i < (necessary-1):
             start_new_cycle(self.nodes[0])
             i = i + 1
 
