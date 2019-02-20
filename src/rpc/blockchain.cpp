@@ -909,6 +909,8 @@ UniValue listproposals(const UniValue& params, bool fHelp)
 
     UniValue ret(UniValue::VARR);
 
+    LOCK(cs_main);
+
     bool showAll = true;
     bool showAccepted = false;
     bool showRejected = false;
@@ -980,6 +982,8 @@ UniValue cfundstats(const UniValue& params, bool fHelp)
     while(nBlocks > 0 && pindexblock != NULL) {
         vSeen.clear();
         for(unsigned int i = 0; i < pindexblock->vProposalVotes.size(); i++) {
+            LOCK(cs_main);
+
             if(!CFund::FindProposal(pindexblock->vProposalVotes[i].first, proposal))
                 continue;
             if(vSeen.count(pindexblock->vProposalVotes[i].first) == 0) {
@@ -993,6 +997,8 @@ UniValue cfundstats(const UniValue& params, bool fHelp)
             }
         }
         for(unsigned int i = 0; i < pindexblock->vPaymentRequestVotes.size(); i++) {
+            LOCK(cs_main);
+
             if(!CFund::FindPaymentRequest(pindexblock->vPaymentRequestVotes[i].first, prequest))
                 continue;
             if(!CFund::FindProposal(prequest.proposalhash, proposal))
@@ -1047,6 +1053,8 @@ UniValue cfundstats(const UniValue& params, bool fHelp)
 
     std::map<uint256, std::pair<int, int>>::iterator it;
     for(it = vCacheProposalsRPC.begin(); it != vCacheProposalsRPC.end(); it++) {
+        LOCK(cs_main);
+
         CFund::CProposal proposal;
         if(!CFund::FindProposal(it->first, proposal))
             continue;
@@ -1059,6 +1067,8 @@ UniValue cfundstats(const UniValue& params, bool fHelp)
         votesProposals.push_back(op);
     }
     for(it = vCachePaymentRequestRPC.begin(); it != vCachePaymentRequestRPC.end(); it++) {
+        LOCK(cs_main);
+
         CFund::CPaymentRequest prequest; CFund::CProposal proposal;
         if(!CFund::FindPaymentRequest(it->first, prequest))
             continue;
@@ -1502,6 +1512,8 @@ UniValue getproposal(const UniValue& params, bool fHelp)
             "1. hash   (string, required) the hash of the proposal\n"
         );
 
+    LOCK(cs_main);
+
     CFund::CProposal proposal;
     if(!CFund::FindProposal(params[0].get_str(), proposal))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Proposal not found");
@@ -1522,6 +1534,8 @@ UniValue getpaymentrequest(const UniValue& params, bool fHelp)
                 "\nArguments:\n"
                 "1. hash   (string, required) the hash of the payment request\n"
         );
+
+    LOCK(cs_main);
 
     CFund::CPaymentRequest prequest;
     if(!CFund::FindPaymentRequest(params[0].get_str(), prequest))

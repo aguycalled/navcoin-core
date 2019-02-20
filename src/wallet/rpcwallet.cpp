@@ -3350,6 +3350,8 @@ UniValue proposalvotelist(const UniValue& params, bool fHelp)
                 "}\n"
         );
 
+    LOCK(cs_main);
+
     UniValue ret(UniValue::VOBJ);
     UniValue yesvotes(UniValue::VARR);
     UniValue novotes(UniValue::VARR);
@@ -3402,6 +3404,8 @@ UniValue proposalvote(const UniValue& params, bool fHelp)
 
     string strHash = params[0].get_str();
     bool duplicate = false;
+
+    LOCK(cs_main);
 
     if (strCommand == "yes")
     {
@@ -3456,25 +3460,28 @@ UniValue paymentrequestvotelist(const UniValue& params, bool fHelp)
     UniValue nullvotes(UniValue::VARR);
 
     std::vector<CFund::CPaymentRequest> vec;
-     if(pblocktree->GetPaymentRequestIndex(vec))
-     {
-         BOOST_FOREACH(const CFund::CPaymentRequest& prequest, vec) {
-             if (prequest.fState != CFund::NIL)
-                 continue;
-             auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
-                 [&prequest](const std::pair<std::string, bool>& element){ return element.first == prequest.hash.ToString();} );
-             UniValue p(UniValue::VOBJ);
-             prequest.ToJson(p);
-             if (it != vAddedPaymentRequestVotes.end()) {
-                 if (it->second)
-                     yesvotes.push_back(p);
-                 else
-                     novotes.push_back(p);
-             } else {
-                 nullvotes.push_back(p);
-             }
-         }
-     }
+
+    LOCK(cs_main);
+
+    if(pblocktree->GetPaymentRequestIndex(vec))
+    {
+        BOOST_FOREACH(const CFund::CPaymentRequest& prequest, vec) {
+            if (prequest.fState != CFund::NIL)
+                continue;
+            auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
+                                    [&prequest](const std::pair<std::string, bool>& element){ return element.first == prequest.hash.ToString();} );
+            UniValue p(UniValue::VOBJ);
+            prequest.ToJson(p);
+            if (it != vAddedPaymentRequestVotes.end()) {
+                if (it->second)
+                    yesvotes.push_back(p);
+                else
+                    novotes.push_back(p);
+            } else {
+                nullvotes.push_back(p);
+            }
+        }
+    }
 
     ret.push_back(Pair("yes",yesvotes));
     ret.push_back(Pair("no",novotes));
@@ -3502,6 +3509,8 @@ UniValue paymentrequestvote(const UniValue& params, bool fHelp)
 
     string strHash = params[0].get_str();
     bool duplicate = false;
+
+    LOCK(cs_main);
 
     if (strCommand == "yes")
     {

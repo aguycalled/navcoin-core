@@ -1825,6 +1825,8 @@ void NavCoinGUI::updateStakingStatus()
                 }
             }
             {
+                LOCK(cs_main);
+
                 std::vector<CFund::CPaymentRequest> vec;
                 if(pblocktree->GetPaymentRequestIndex(vec))
                 {

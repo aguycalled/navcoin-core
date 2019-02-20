@@ -166,10 +166,14 @@ bool CBlockTreeDB::WriteTxIndex(const std::vector<std::pair<uint256, CDiskTxPos>
 }
 
 bool CBlockTreeDB::ReadProposalIndex(const uint256 &proposalid, CFund::CProposal &proposal) {
+    AssertLockHeld(cs_main);
+
     return Read(make_pair(DB_PROPINDEX, proposalid), proposal);
 }
 
 bool CBlockTreeDB::WriteProposalIndex(const std::vector<std::pair<uint256, CFund::CProposal> >&vect) {
+    AssertLockHeld(cs_main);
+
     CDBBatch batch(*this);
     for (std::vector<std::pair<uint256,CFund::CProposal> >::const_iterator it=vect.begin(); it!=vect.end(); it++)
         batch.Write(make_pair(DB_PROPINDEX, it->first), it->second);
@@ -177,6 +181,8 @@ bool CBlockTreeDB::WriteProposalIndex(const std::vector<std::pair<uint256, CFund
 }
 
 bool CBlockTreeDB::UpdateProposalIndex(const std::vector<std::pair<uint256, CFund::CProposal> >&vect) {
+    AssertLockHeld(cs_main);
+
     CDBBatch batch(*this);
     for (std::vector<std::pair<uint256,CFund::CProposal> >::const_iterator it=vect.begin(); it!=vect.end(); it++) {
         if (it->second.IsNull()) {
@@ -189,6 +195,8 @@ bool CBlockTreeDB::UpdateProposalIndex(const std::vector<std::pair<uint256, CFun
 }
 
 bool CBlockTreeDB::GetProposalIndex(std::vector<CFund::CProposal>&vect) {
+    AssertLockHeld(cs_main);
+
     boost::scoped_ptr<CDBIterator> pcursor(NewIterator());
 
     pcursor->Seek(make_pair(DB_PROPINDEX, uint256()));
@@ -215,10 +223,14 @@ bool CBlockTreeDB::GetProposalIndex(std::vector<CFund::CProposal>&vect) {
 }
 
 bool CBlockTreeDB::ReadPaymentRequestIndex(const uint256 &prequestid, CFund::CPaymentRequest &prequest) {
+    AssertLockHeld(cs_main);
+
     return Read(make_pair(DB_PREQINDEX, prequestid), prequest);
 }
 
 bool CBlockTreeDB::WritePaymentRequestIndex(const std::vector<std::pair<uint256, CFund::CPaymentRequest> >&vect) {
+    AssertLockHeld(cs_main);
+
     CDBBatch batch(*this);
     for (std::vector<std::pair<uint256,CFund::CPaymentRequest> >::const_iterator it=vect.begin(); it!=vect.end(); it++)
         batch.Write(make_pair(DB_PREQINDEX, it->first), it->second);
@@ -226,6 +238,8 @@ bool CBlockTreeDB::WritePaymentRequestIndex(const std::vector<std::pair<uint256,
 }
 
 bool CBlockTreeDB::UpdatePaymentRequestIndex(const std::vector<std::pair<uint256, CFund::CPaymentRequest> >&vect) {
+    AssertLockHeld(cs_main);
+
     CDBBatch batch(*this);
     for (std::vector<std::pair<uint256,CFund::CPaymentRequest> >::const_iterator it=vect.begin(); it!=vect.end(); it++) {
         if (it->second.IsNull()) {
@@ -238,6 +252,8 @@ bool CBlockTreeDB::UpdatePaymentRequestIndex(const std::vector<std::pair<uint256
 }
 
 bool CBlockTreeDB::GetPaymentRequestIndex(std::vector<CFund::CPaymentRequest>&vect) {
+    AssertLockHeld(cs_main);
+
     boost::scoped_ptr<CDBIterator> pcursor(NewIterator());
 
     pcursor->Seek(make_pair(DB_PREQINDEX, uint256()));

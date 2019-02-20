@@ -46,6 +46,7 @@ bool CFund::FindProposal(string propstr, CFund::CProposal &proposal)
 
 bool CFund::FindProposal(uint256 prophash, CFund::CProposal &proposal)
 {
+    AssertLockHeld(cs_main);
 
     CFund::CProposal temp;
     if(pblocktree->ReadProposalIndex(prophash, temp)) {
@@ -59,6 +60,7 @@ bool CFund::FindProposal(uint256 prophash, CFund::CProposal &proposal)
 
 bool CFund::FindPaymentRequest(uint256 preqhash, CFund::CPaymentRequest &prequest)
 {
+    AssertLockHeld(cs_main);
 
     CFund::CPaymentRequest temp;
     if(pblocktree->ReadPaymentRequestIndex(preqhash, temp)) {
@@ -79,6 +81,7 @@ bool CFund::FindPaymentRequest(string preqstr, CFund::CPaymentRequest &prequest)
 
 bool CFund::VoteProposal(string strProp, bool vote, bool &duplicate)
 {
+    AssertLockHeld(cs_main);
 
     CFund::CProposal proposal;
     bool found = CFund::FindProposal(uint256S("0x"+strProp), proposal);
@@ -133,6 +136,7 @@ bool CFund::RemoveVoteProposal(uint256 proposalHash)
 
 bool CFund::VotePaymentRequest(string strProp, bool vote, bool &duplicate)
 {
+    AssertLockHeld(cs_main);
 
     CFund::CPaymentRequest prequest;
     bool found = CFund::FindPaymentRequest(uint256S("0x"+strProp), prequest);
@@ -225,8 +229,12 @@ bool CFund::IsValidPaymentRequest(CTransaction tx, int nMaxVersion)
 
     CFund::CProposal proposal;
 
+    {
+    AssertLockHeld(cs_main);
+
     if(!CFund::FindProposal(Hash, proposal) || proposal.fState != CFund::ACCEPTED)
         return error("%s: Could not find parent proposal %s for payment request %s", __func__, Hash.c_str(),tx.GetHash().ToString());
+    }
 
     std::string sRandom = "";
 
@@ -273,6 +281,7 @@ bool CFund::IsValidPaymentRequest(CTransaction tx, int nMaxVersion)
 
 bool CFund::CPaymentRequest::CanVote() const {
     CFund::CProposal proposal;
+    AssertLockHeld(cs_main);
     if(!CFund::FindProposal(proposalhash, proposal))
         return false;
     return nAmount <= proposal.GetAvailable() && fState != ACCEPTED && fState != REJECTED && fState != EXPIRED && !ExceededMaxVotingCycles();
@@ -392,6 +401,7 @@ bool CFund::CProposal::CanVote() const {
 }
 
 bool CFund::CProposal::IsExpired(uint32_t currentTime) const {
+    AssertLockHeld(cs_main);
     if(nVersion >= 2) {
         if (fState == ACCEPTED && mapBlockIndex.count(blockhash) > 0) {
             CBlockIndex* pBlockIndex = mapBlockIndex[blockhash];
@@ -434,6 +444,8 @@ std::string CFund::CProposal::GetState(uint32_t currentTime) const {
 }
 
 void CFund::CProposal::ToJson(UniValue& ret) const {
+    AssertLockHeld(cs_main);
+
     ret.push_back(Pair("version", nVersion));
     ret.push_back(Pair("hash", hash.ToString()));
     ret.push_back(Pair("blockHash", txblockhash.ToString()));

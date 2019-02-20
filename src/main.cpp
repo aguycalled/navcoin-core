@@ -3866,6 +3866,8 @@ std::map<uint256, std::pair<int, int>> vCachePaymentRequestToUpdate;
 
 void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo)
 {
+    AssertLockHeld(cs_main);
+
     int64_t nTimeStart = GetTimeMicros();
     CFund::CPaymentRequest prequest; CFund::CProposal proposal;
 
