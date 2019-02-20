@@ -138,6 +138,7 @@ void CFund_Voting::Refresh()
     int nCount = 0;
 
     {
+    LOCK(cs_main);
     std::vector<CFund::CProposal> vec;
     if(pblocktree->GetProposalIndex(vec))
     {
@@ -166,6 +167,7 @@ void CFund_Voting::Refresh()
     }
 
     {
+    LOCK(cs_main);
     std::vector<CFund::CPaymentRequest> vec;
     if(pblocktree->GetPaymentRequestIndex(vec))
     {
