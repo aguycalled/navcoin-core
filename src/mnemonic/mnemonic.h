@@ -24,8 +24,8 @@
 #include <string>
 #include <vector>
 #include <array>
-#include <mnemonic/arrayslice.h>
-#include <mnemonic/dictionary.h>
+#include "mnemonic/arrayslice.h"
+#include "mnemonic/dictionary.h"
 
 /**
 * A valid mnemonic word count is evenly divisible by this number.
