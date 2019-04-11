@@ -156,6 +156,7 @@ NAVCOIN_CORE_H = \
   wallet/rpcwallet.h \
   wallet/wallet.h \
   wallet/walletdb.h \
+  mnemonic/arrayslice.h \
   mnemonic/dictionary.h \
   mnemonic/mnemonic.h \
   zmq/zmqabstractnotifier.h \
