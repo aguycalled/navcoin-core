@@ -260,7 +260,7 @@ bool CFund::IsValidPaymentRequest(CTransaction tx, int nMaxVersion)
 
     if(nAmount > proposal.GetAvailable(true))
         return error("%s: Invalid requested amount for payment request %s (%d vs %d available)",
-                     __func__, tx.GetHash().ToString(), nAmount, proposal.GetAvailable());
+                     __func__, tx.GetHash().ToString(), nAmount, proposal.GetAvailable(true));
     
     bool ret = (nVersion <= nMaxVersion);
 
