@@ -228,7 +228,6 @@ CFund::CProposal CBlockTreeDB::GetProposal(uint256 hash)
             if (pcursor->GetValue(proposal)) {
                 if(proposal.hash == hash){
                     return proposal;
-
                 }
             pcursor->Next();
             } else {

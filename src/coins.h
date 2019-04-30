@@ -19,6 +19,8 @@
 #include <boost/foreach.hpp>
 #include <boost/unordered_map.hpp>
 
+using namespace CFund;
+
 /** 
  * Pruned version of CTransaction: only retains metadata and unspent transaction outputs
  *
@@ -305,7 +307,35 @@ struct CCoinsCacheEntry
     CCoinsCacheEntry() : coins(), flags(0) {}
 };
 
+struct CProposalCacheEntry
+{
+    CProposal proposal; // The actual cached data.
+    unsigned char flags;
+
+    enum Flags {
+        DIRTY = (1 << 0), // This cache entry is potentially different from the version in the parent view.
+        FRESH = (1 << 1), // The parent view does not have this entry (or it is pruned).
+    };
+
+    CProposalCacheEntry() : proposal(), flags(0) {}
+};
+
+struct CPaymentRequestCacheEntry
+{
+    CPaymentRequest prequest; // The actual cached data.
+    unsigned char flags;
+
+    enum Flags {
+        DIRTY = (1 << 0), // This cache entry is potentially different from the version in the parent view.
+        FRESH = (1 << 1), // The parent view does not have this entry (or it is pruned).
+    };
+
+    CPaymentRequestCacheEntry() : prequest(), flags(0) {}
+};
+
 typedef boost::unordered_map<uint256, CCoinsCacheEntry, SaltedTxidHasher> CCoinsMap;
+typedef boost::unordered_map<uint256, CProposalCacheEntry, SaltedTxidHasher> CProposalMap;
+typedef boost::unordered_map<uint256, CPaymentRequestCacheEntry, SaltedTxidHasher> CPaymentRequestMap;
 
 /** Cursor for iterating over CoinsView state */
 class CCoinsViewCursor
@@ -339,12 +369,19 @@ public:
     //! This may (but cannot always) return true for fully spent transactions
     virtual bool HaveCoins(const uint256 &txid) const;
 
+    //! Community Fund
+    virtual bool GetProposal(const uint256 &pid, CProposal &proposal) const;
+    virtual bool GetPaymentRequest(const uint256 &prid, CPaymentRequest &prequest) const;
+    virtual bool HaveProposal(const uint256 &pid) const;
+    virtual bool HavePaymentRequest(const uint256 &prid) const;
+
     //! Retrieve the block hash whose state this CCoinsView currently represents
     virtual uint256 GetBestBlock() const;
 
     //! Do a bulk modification (multiple CCoins changes + BestBlock change).
     //! The passed mapCoins can be modified.
-    virtual bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock);
+    virtual bool BatchWrite(CCoinsMap &mapCoins, CProposalMap &mapProposals,
+                            CPaymentRequestMap &mapPaymentRequests, const uint256 &hashBlock);
 
     //! Get a cursor to iterate over the whole state
     virtual CCoinsViewCursor *Cursor() const;
@@ -364,9 +401,13 @@ public:
     CCoinsViewBacked(CCoinsView *viewIn);
     bool GetCoins(const uint256 &txid, CCoins &coins) const;
     bool HaveCoins(const uint256 &txid) const;
+    bool GetProposal(const uint256 &txid, CProposal &proposal) const;
+    bool GetPaymentRequest(const uint256 &txid, CPaymentRequest &prequest) const;
+    bool HaveProposal(const uint256 &pid) const;
+    bool HavePaymentRequest(const uint256 &prid) const;
     uint256 GetBestBlock() const;
     void SetBackend(CCoinsView &viewIn);
-    bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock);
+    bool BatchWrite(CCoinsMap &mapCoins, CProposalMap &mapProposals, CPaymentRequestMap &mapPaymentRequests, const uint256 &hashBlock);
     CCoinsViewCursor *Cursor() const;
 };
 
@@ -393,6 +434,37 @@ public:
     friend class CCoinsViewCache;
 };
 
+class CProposalModifier
+{
+private:
+    CCoinsViewCache& cache;
+    CProposalMap::iterator it;
+    size_t cachedProposalUsage; // Cached memory usage of the CCoins object before modification
+    CProposalModifier(CCoinsViewCache& cache_, CProposalMap::iterator it_, size_t usage);
+
+public:
+    CProposal* operator->() { return &it->second.proposal; }
+    CProposal& operator*() { return it->second.proposal; }
+    ~CProposalModifier();
+    friend class CCoinsViewCache;
+};
+
+
+class CPaymentRequestModifier
+{
+private:
+    CCoinsViewCache& cache;
+    CPaymentRequestMap::iterator it;
+    size_t cachedPRequestUsage; // Cached memory usage of the CCoins object before modification
+    CPaymentRequestModifier(CCoinsViewCache& cache_, CPaymentRequestMap::iterator it_, size_t usage);
+
+public:
+    CPaymentRequest* operator->() { return &it->second.prequest; }
+    CPaymentRequest& operator*() { return it->second.prequest; }
+    ~CPaymentRequestModifier();
+    friend class CCoinsViewCache;
+};
+
 /** CCoinsView that adds a memory cache for transactions to another CCoinsView */
 class CCoinsViewCache : public CCoinsViewBacked
 {
@@ -400,13 +472,14 @@ protected:
     /* Whether this cache has an active modifier. */
     bool hasModifier;
 
-
     /**
      * Make mutable so that we can "fill the cache" even from Get-methods
      * declared as "const".  
      */
     mutable uint256 hashBlock;
     mutable CCoinsMap cacheCoins;
+    mutable CProposalMap cacheProposals;
+    mutable CPaymentRequestMap cachePaymentRequests;
 
     /* Cached dynamic memory usage for the inner CCoins objects. */
     mutable size_t cachedCoinsUsage;
@@ -420,7 +493,11 @@ public:
     bool HaveCoins(const uint256 &txid) const;
     uint256 GetBestBlock() const;
     void SetBestBlock(const uint256 &hashBlock);
-    bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock);
+    bool BatchWrite(CCoinsMap &mapCoins, CProposalMap &mapProposals, CPaymentRequestMap &mapPaymentRequest,
+                    const uint256 &hashBlock);
+
+    bool GetProposal(const uint256 &pid, CProposal &proposal) const;
+    bool GetPaymentRequest(const uint256 &pid, CPaymentRequest &prequest) const;
 
     /**
      * Check if we have the given tx already loaded in this cache.
@@ -442,6 +519,8 @@ public:
      * allowed.
      */
     CCoinsModifier ModifyCoins(const uint256 &txid);
+    CProposalModifier ModifyProposal(const uint256 &pid);
+    CPaymentRequestModifier ModifyPaymentRequest(const uint256 &prid);
 
     /**
      * Return a modifiable reference to a CCoins. Assumes that no entry with the given
@@ -500,6 +579,9 @@ public:
 private:
     CCoinsMap::iterator FetchCoins(const uint256 &txid);
     CCoinsMap::const_iterator FetchCoins(const uint256 &txid) const;
+
+    CProposalMap::const_iterator FetchProposal(const uint256 &pid) const;
+    CPaymentRequestMap::const_iterator FetchPaymentRequest(const uint256 &prid) const;
 
     /**
      * By making the copy constructor private, we prevent accidentally using it when one intends to create a cache on top of a base cache.

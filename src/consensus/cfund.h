@@ -264,7 +264,8 @@ public:
         {
             CFund::CPaymentRequest prequest;
             if(FindPaymentRequest(vPayments[i], prequest))
-                if((fIncludeRequests && prequest.fState != REJECTED) || (!fIncludeRequests && prequest.fState == ACCEPTED))
+                if((fIncludeRequests && prequest.fState != REJECTED && prequest.fState != EXPIRED)
+                        || (!fIncludeRequests && prequest.fState == ACCEPTED))
                     initial -= prequest.nAmount;
         }
         return initial;
