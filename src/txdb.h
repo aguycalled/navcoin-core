@@ -162,15 +162,15 @@ public:
     bool WriteFlag(const std::string &name, bool fValue);
     bool ReadFlag(const std::string &name, bool &fValue);
     bool LoadBlockIndexGuts(boost::function<CBlockIndex*(const uint256&)> insertBlockIndex);
-    bool ReadProposalIndex(const uint256 &proposalid, CFund::CProposal &proposal);
-    bool WriteProposalIndex(const std::vector<std::pair<uint256, CFund::CProposal> >&vect);
-    bool GetProposalIndex(std::vector<CFund::CProposal>&vect);
-    CFund::CProposal GetProposal(uint256 hash);
-    bool UpdateProposalIndex(const std::vector<std::pair<uint256, CFund::CProposal> >&vect);
-    bool ReadPaymentRequestIndex(const uint256 &prequestid, CFund::CPaymentRequest &prequest);
-    bool WritePaymentRequestIndex(const std::vector<std::pair<uint256, CFund::CPaymentRequest> >&vect);
-    bool GetPaymentRequestIndex(std::vector<CFund::CPaymentRequest>&vect);
-    bool UpdatePaymentRequestIndex(const std::vector<std::pair<uint256, CFund::CPaymentRequest> >&vect);
+    bool ReadProposalIndex(const uint256 &proposalid, CGovernance::CProposal &proposal);
+    bool WriteProposalIndex(const std::vector<std::pair<uint256, CGovernance::CProposal> >&vect);
+    bool GetProposalIndex(std::vector<CGovernance::CProposal>&vect);
+    CGovernance::CProposal GetProposal(uint256 hash);
+    bool UpdateProposalIndex(const std::vector<std::pair<uint256, CGovernance::CProposal> >&vect);
+    bool ReadPaymentRequestIndex(const uint256 &prequestid, CGovernance::CPaymentRequest &prequest);
+    bool WritePaymentRequestIndex(const std::vector<std::pair<uint256, CGovernance::CPaymentRequest> >&vect);
+    bool GetPaymentRequestIndex(std::vector<CGovernance::CPaymentRequest>&vect);
+    bool UpdatePaymentRequestIndex(const std::vector<std::pair<uint256, CGovernance::CPaymentRequest> >&vect);
 };
 
 #endif // NAVCOIN_TXDB_H

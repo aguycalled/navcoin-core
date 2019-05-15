@@ -2,7 +2,7 @@
 #define COMMUNITYFUNDPAGE_H
 
 #include "communityfundpage.moc"
-#include "consensus/cfund.h"
+#include "consensus/governance.h"
 #include "wallet/wallet.h"
 
 #include <QWidget>
@@ -44,7 +44,7 @@ private:
     Ui::CommunityFundPage *ui;
     ClientModel *clientModel;
     WalletModel *walletModel;
-    CFund::flags flag;
+    CGovernance::flags flag;
     CWallet *wallet;
     bool viewing_proposals;
     bool viewing_voted;

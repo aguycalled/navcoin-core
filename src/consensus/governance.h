@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef NAVCOIN_CFUND_H
-#define NAVCOIN_CFUND_H
+#ifndef NAVCOIN_GOVERNANCE_H
+#define NAVCOIN_GOVERNANCE_H
 
 #include "amount.h"
 #include "script/script.h"
@@ -20,7 +20,7 @@ class CCoinsViewCache;
 extern std::vector<std::pair<std::string, bool>> vAddedProposalVotes;
 extern std::vector<std::pair<std::string, bool>> vAddedPaymentRequestVotes;
 
-namespace CFund {
+namespace CGovernance {
 
 class CProposal;
 class CPaymentRequest;
@@ -35,12 +35,12 @@ static const flags PENDING_FUNDS = 0x4;
 static const flags PENDING_VOTING_PREQ = 0x5;
 
 void SetScriptForCommunityFundContribution(CScript &script);
-void SetScriptForProposalVote(CScript &script, uint256 proposalhash, bool vote);
-void SetScriptForPaymentRequestVote(CScript &script, uint256 prequest, bool vote);
-bool FindProposal(string propstr, CFund::CProposal &proposal);
-bool FindProposal(uint256 prophash, CFund::CProposal &proposal);
-bool FindPaymentRequest(uint256 preqhash, CFund::CPaymentRequest &prequest);
-bool FindPaymentRequest(string preqstr, CFund::CPaymentRequest &prequest);
+void SetScriptForProposalVote(CScript &script, uint256 proposalhash, int vote);
+void SetScriptForPaymentRequestVote(CScript &script, uint256 prequest, int vote);
+bool FindProposal(string propstr, CGovernance::CProposal &proposal);
+bool FindProposal(uint256 prophash, CGovernance::CProposal &proposal);
+bool FindPaymentRequest(uint256 preqhash, CGovernance::CPaymentRequest &prequest);
+bool FindPaymentRequest(string preqstr, CGovernance::CPaymentRequest &prequest);
 bool VoteProposal(string strProp, bool vote, bool &duplicate);
 bool VoteProposal(uint256 proposalHash, bool vote, bool &duplicate);
 bool RemoveVoteProposal(string strProp);
@@ -291,4 +291,4 @@ public:
 
 }
 
-#endif // NAVCOIN_CFUND_H
+#endif // NAVCOIN_GOVERNANCE_H

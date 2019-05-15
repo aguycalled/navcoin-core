@@ -2,7 +2,7 @@
 #define COMMUNITYFUNDDISPLAYPAYMENTREQUESTDETAILED_H
 
 #include <QWidget>
-#include "consensus/cfund.h"
+#include "consensus/governance.h"
 #include "wallet/wallet.h"
 #include <QDialog>
 #include <QAbstractButton>
@@ -16,12 +16,12 @@ class CommunityFundDisplayPaymentRequestDetailed : public QDialog
     Q_OBJECT
 
 public:
-    explicit CommunityFundDisplayPaymentRequestDetailed(QWidget *parent = 0, CFund::CPaymentRequest prequest = CFund::CPaymentRequest());
+    explicit CommunityFundDisplayPaymentRequestDetailed(QWidget *parent = 0, CGovernance::CPaymentRequest prequest = CGovernance::CPaymentRequest());
     ~CommunityFundDisplayPaymentRequestDetailed();
 
 private:
     Ui::CommunityFundDisplayPaymentRequestDetailed *ui;
-    CFund::CPaymentRequest prequest;
+    CGovernance::CPaymentRequest prequest;
     CWallet *wallet;
     void setPrequestLabels() const;
 

@@ -934,17 +934,17 @@ UniValue listproposals(const UniValue& params, bool fHelp)
         }
     }
 
-    std::vector<CFund::CProposal> vec;
+    std::vector<CGovernance::CProposal> vec;
     if(pblocktree->GetProposalIndex(vec))
     {
-        BOOST_FOREACH(const CFund::CProposal& proposal, vec) {
+        BOOST_FOREACH(const CGovernance::CProposal& proposal, vec) {
             if((showAll && (!proposal.IsExpired(pindexBestHeader->GetBlockTime())
-                            || proposal.fState == CFund::PENDING_VOTING_PREQ
-                            || proposal.fState == CFund::PENDING_FUNDS))
-                    || (showPending  && (proposal.fState == CFund::NIL || proposal.fState == CFund::PENDING_VOTING_PREQ
-                                         || proposal.fState == CFund::PENDING_FUNDS))
-                    || (showAccepted && (proposal.fState == CFund::ACCEPTED || proposal.IsAccepted()))
-                    || (showRejected && (proposal.fState == CFund::REJECTED || proposal.IsRejected()))
+                            || proposal.fState == CGovernance::PENDING_VOTING_PREQ
+                            || proposal.fState == CGovernance::PENDING_FUNDS))
+                    || (showPending  && (proposal.fState == CGovernance::NIL || proposal.fState == CGovernance::PENDING_VOTING_PREQ
+                                         || proposal.fState == CGovernance::PENDING_FUNDS))
+                    || (showAccepted && (proposal.fState == CGovernance::ACCEPTED || proposal.IsAccepted()))
+                    || (showRejected && (proposal.fState == CGovernance::REJECTED || proposal.IsRejected()))
                     || (showExpired  &&  proposal.IsExpired(pindexBestHeader->GetBlockTime()))) {
                 UniValue o(UniValue::VOBJ);
                 proposal.ToJson(o, *pcoinsTip);
@@ -966,7 +966,7 @@ UniValue cfundstats(const UniValue& params, bool fHelp)
             + HelpExampleRpc("cfundstats", "")
         );
 
-    CFund::CProposal proposal; CFund::CPaymentRequest prequest;
+    CGovernance::CProposal proposal; CGovernance::CPaymentRequest prequest;
 
     int nBlocks = (chainActive.Tip()->nHeight % Params().GetConsensus().nBlocksPerVotingCycle) + 1;
     CBlockIndex* pindexblock = chainActive.Tip();
@@ -981,7 +981,7 @@ UniValue cfundstats(const UniValue& params, bool fHelp)
     while(nBlocks > 0 && pindexblock != NULL) {
         vSeen.clear();
         for(unsigned int i = 0; i < pindexblock->vProposalVotes.size(); i++) {
-            if(!CFund::FindProposal(pindexblock->vProposalVotes[i].first, proposal))
+            if(!CGovernance::FindProposal(pindexblock->vProposalVotes[i].first, proposal))
                 continue;
             if(vSeen.count(pindexblock->vProposalVotes[i].first) == 0) {
                 if(vCacheProposalsRPC.count(pindexblock->vProposalVotes[i].first) == 0)
@@ -994,9 +994,9 @@ UniValue cfundstats(const UniValue& params, bool fHelp)
             }
         }
         for(unsigned int i = 0; i < pindexblock->vPaymentRequestVotes.size(); i++) {
-            if(!CFund::FindPaymentRequest(pindexblock->vPaymentRequestVotes[i].first, prequest))
+            if(!CGovernance::FindPaymentRequest(pindexblock->vPaymentRequestVotes[i].first, prequest))
                 continue;
-            if(!CFund::FindProposal(prequest.proposalhash, proposal))
+            if(!CGovernance::FindProposal(prequest.proposalhash, proposal))
                 continue;
             if (mapBlockIndex.count(proposal.blockhash) == 0)
                 continue;
@@ -1048,8 +1048,8 @@ UniValue cfundstats(const UniValue& params, bool fHelp)
 
     std::map<uint256, std::pair<int, int>>::iterator it;
     for(it = vCacheProposalsRPC.begin(); it != vCacheProposalsRPC.end(); it++) {
-        CFund::CProposal proposal;
-        if(!CFund::FindProposal(it->first, proposal))
+        CGovernance::CProposal proposal;
+        if(!CGovernance::FindProposal(it->first, proposal))
             continue;
         UniValue op(UniValue::VOBJ);
         op.push_back(Pair("str", proposal.strDZeel));
@@ -1060,10 +1060,10 @@ UniValue cfundstats(const UniValue& params, bool fHelp)
         votesProposals.push_back(op);
     }
     for(it = vCachePaymentRequestRPC.begin(); it != vCachePaymentRequestRPC.end(); it++) {
-        CFund::CPaymentRequest prequest; CFund::CProposal proposal;
-        if(!CFund::FindPaymentRequest(it->first, prequest))
+        CGovernance::CPaymentRequest prequest; CGovernance::CProposal proposal;
+        if(!CGovernance::FindPaymentRequest(it->first, prequest))
             continue;
-        if(!CFund::FindProposal(prequest.proposalhash, proposal))
+        if(!CGovernance::FindProposal(prequest.proposalhash, proposal))
             continue;
         UniValue op(UniValue::VOBJ);
         op.push_back(Pair("hash", prequest.hash.ToString()));
@@ -1506,8 +1506,8 @@ UniValue getproposal(const UniValue& params, bool fHelp)
 
     LOCK(cs_main);
 
-    CFund::CProposal proposal;
-    if(!CFund::FindProposal(params[0].get_str(), proposal))
+    CGovernance::CProposal proposal;
+    if(!CGovernance::FindProposal(params[0].get_str(), proposal))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Proposal not found");
 
     UniValue ret(UniValue::VOBJ);
@@ -1527,8 +1527,8 @@ UniValue getpaymentrequest(const UniValue& params, bool fHelp)
                 "1. hash   (string, required) the hash of the payment request\n"
         );
 
-    CFund::CPaymentRequest prequest;
-    if(!CFund::FindPaymentRequest(params[0].get_str(), prequest))
+    CGovernance::CPaymentRequest prequest;
+    if(!CGovernance::FindPaymentRequest(params[0].get_str(), prequest))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Payment request not found");
 
     UniValue ret(UniValue::VOBJ);

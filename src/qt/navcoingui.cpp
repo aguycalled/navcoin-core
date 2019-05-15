@@ -1855,11 +1855,11 @@ void NavCoinGUI::updateStakingStatus()
             bool fFoundProposal = false;
             bool fFoundPaymentRequest = false;
             {
-                std::vector<CFund::CProposal> vec;
+                std::vector<CGovernance::CProposal> vec;
                 if(pblocktree->GetProposalIndex(vec))
                 {
-                    BOOST_FOREACH(const CFund::CProposal& proposal, vec) {
-                        if (proposal.fState != CFund::NIL)
+                    BOOST_FOREACH(const CGovernance::CProposal& proposal, vec) {
+                        if (proposal.fState != CGovernance::NIL)
                             continue;
                         auto it = std::find_if( vAddedProposalVotes.begin(), vAddedProposalVotes.end(),
                                                 [&proposal](const std::pair<std::string, int>& element){ return element.first == proposal.hash.ToString();} );
@@ -1871,11 +1871,11 @@ void NavCoinGUI::updateStakingStatus()
                 }
             }
             {
-                std::vector<CFund::CPaymentRequest> vec;
+                std::vector<CGovernance::CPaymentRequest> vec;
                 if(pblocktree->GetPaymentRequestIndex(vec))
                 {
-                    BOOST_FOREACH(const CFund::CPaymentRequest& prequest, vec) {
-                        if (prequest.fState != CFund::NIL)
+                    BOOST_FOREACH(const CGovernance::CPaymentRequest& prequest, vec) {
+                        if (prequest.fState != CGovernance::NIL)
                             continue;
                         auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
                                                 [&prequest](const std::pair<std::string, int>& element){ return element.first == prequest.hash.ToString();} );

@@ -50,9 +50,9 @@ compat/strnlen.cpp
 compressor.cpp
 compressor.h
 config/navcoin-config.h
-consensus/cfund.cpp
-consensus/cfund.h
 consensus/consensus.h
+consensus/governance.cpp
+consensus/governance.h
 consensus/merkle.cpp
 consensus/merkle.h
 consensus/params.h

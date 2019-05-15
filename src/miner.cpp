@@ -211,14 +211,14 @@ CBlockTemplate* BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bo
         std::map<uint256, bool> votes;
         for (unsigned int i = 0; i < vAddedProposalVotes.size(); i++)
         {
-            CFund::CProposal proposal;
+            CGovernance::CProposal proposal;
             bool vote = vAddedProposalVotes[i].second;
-            if(CFund::FindProposal(vAddedProposalVotes[i].first, proposal))
+            if(CGovernance::FindProposal(vAddedProposalVotes[i].first, proposal))
             {
                 if(proposal.CanVote() && votes.count(proposal.hash) == 0)
                 {
                     coinbaseTx.vout.resize(coinbaseTx.vout.size()+1);
-                    CFund::SetScriptForProposalVote(coinbaseTx.vout[coinbaseTx.vout.size()-1].scriptPubKey,proposal.hash, vote);
+                    CGovernance::SetScriptForProposalVote(coinbaseTx.vout[coinbaseTx.vout.size()-1].scriptPubKey,proposal.hash, vote);
                     coinbaseTx.vout[coinbaseTx.vout.size()-1].nValue = 0;
                     votes[proposal.hash] = vote;
                 }
@@ -228,23 +228,23 @@ CBlockTemplate* BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bo
 
         for (unsigned int i = 0; i < vAddedPaymentRequestVotes.size(); i++)
         {
-            CFund::CPaymentRequest prequest; CFund::CProposal proposal;
+            CGovernance::CPaymentRequest prequest; CGovernance::CProposal proposal;
             bool vote = vAddedPaymentRequestVotes[i].second;
-            if(CFund::FindPaymentRequest(vAddedPaymentRequestVotes[i].first, prequest))
+            if(CGovernance::FindPaymentRequest(vAddedPaymentRequestVotes[i].first, prequest))
             {
-                if(!CFund::FindProposal(prequest.proposalhash, proposal))
+                if(!CGovernance::FindProposal(prequest.proposalhash, proposal))
                     continue;
                 if (mapBlockIndex.count(proposal.blockhash) == 0)
                     continue;
                 CBlockIndex* pblockindex = mapBlockIndex[proposal.blockhash];
                 if(pblockindex == NULL)
                     continue;
-                if((proposal.CanRequestPayments() || proposal.fState == CFund::PENDING_VOTING_PREQ)
+                if((proposal.CanRequestPayments() || proposal.fState == CGovernance::PENDING_VOTING_PREQ)
                         && prequest.CanVote(*pcoinsTip) && votes.count(prequest.hash) == 0 &&
                         pindexPrev->nHeight - pblockindex->nHeight > Params().GetConsensus().nCommunityFundMinAge)
                 {
                     coinbaseTx.vout.resize(coinbaseTx.vout.size()+1);
-                    CFund::SetScriptForPaymentRequestVote(coinbaseTx.vout[coinbaseTx.vout.size()-1].scriptPubKey,prequest.hash, vote);
+                    CGovernance::SetScriptForPaymentRequestVote(coinbaseTx.vout[coinbaseTx.vout.size()-1].scriptPubKey,prequest.hash, vote);
                     coinbaseTx.vout[coinbaseTx.vout.size()-1].nValue = 0;
                     votes[prequest.hash] = vote;
                 }
@@ -252,10 +252,10 @@ CBlockTemplate* BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bo
         }
 
         UniValue strDZeel(UniValue::VARR);
-        std::vector<CFund::CPaymentRequest> vec;
+        std::vector<CGovernance::CPaymentRequest> vec;
         if(pblocktree->GetPaymentRequestIndex(vec))
         {
-            BOOST_FOREACH(const CFund::CPaymentRequest& prequest, vec) {
+            BOOST_FOREACH(const CGovernance::CPaymentRequest& prequest, vec) {
                 if (mapBlockIndex.count(prequest.blockhash) == 0)
                     continue;
                 CBlockIndex* pblockindex = mapBlockIndex[prequest.blockhash];
@@ -263,10 +263,10 @@ CBlockTemplate* BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bo
                     continue;
                 if(prequest.hash == uint256())
                     continue;
-                if(prequest.fState == CFund::ACCEPTED && prequest.paymenthash == uint256() &&
+                if(prequest.fState == CGovernance::ACCEPTED && prequest.paymenthash == uint256() &&
                         pindexPrev->nHeight - pblockindex->nHeight > Params().GetConsensus().nCommunityFundMinAge) {
-                    CFund::CProposal proposal;
-                    if(CFund::FindProposal(prequest.proposalhash, proposal)) {
+                    CGovernance::CProposal proposal;
+                    if(CGovernance::FindProposal(prequest.proposalhash, proposal)) {
                         CNavCoinAddress addr(proposal.Address);
                         if (!addr.IsValid())
                             continue;
@@ -275,7 +275,7 @@ CBlockTemplate* BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bo
                         coinbaseTx.vout[coinbaseTx.vout.size()-1].nValue = prequest.nAmount;
                         strDZeel.push_back(prequest.hash.ToString());
                     } else {
-                        LogPrint("cfund", "Could not find parent proposal of payment request %s.\n", prequest.hash.ToString());
+                        LogPrint("governance", "Could not find parent proposal of payment request %s.\n", prequest.hash.ToString());
                     }
                 }
             }

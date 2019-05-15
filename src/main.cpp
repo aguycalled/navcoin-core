@@ -1339,11 +1339,11 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
             int nMaxVersionPaymentRequest = fReducedQuorum ? Params().GetConsensus().nPaymentRequestMaxVersion : 2;
 
             if(tx.nVersion == CTransaction::PROPOSAL_VERSION) // Community Fund Proposal
-                if(!CFund::IsValidProposal(tx, nMaxVersionProposal))
+                if(!CGovernance::IsValidProposal(tx, nMaxVersionProposal))
                     return state.DoS(10, false, REJECT_INVALID, "bad-cfund-proposal");
 
             if(tx.nVersion == CTransaction::PAYMENT_REQUEST_VERSION) // Community Fund Payment Request
-                if(!CFund::IsValidPaymentRequest(tx, view, nMaxVersionPaymentRequest))
+                if(!CGovernance::IsValidPaymentRequest(tx, view, nMaxVersionPaymentRequest))
                     return state.DoS(10, false, REJECT_INVALID, "bad-cfund-payment-request");
         }
 
@@ -1698,12 +1698,12 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
               }
             }
 
-            if(nProposalFee > 0 && tx.nVersion == CTransaction::PROPOSAL_VERSION && CFund::IsValidProposal(tx, nMaxVersionProposal)){
+            if(nProposalFee > 0 && tx.nVersion == CTransaction::PROPOSAL_VERSION && CGovernance::IsValidProposal(tx, nMaxVersionProposal)){
                 if (!NewProposal(tx, uint256(), nProposalFee, state))
                     return false;
             }
 
-            if(tx.nVersion == CTransaction::PAYMENT_REQUEST_VERSION && CFund::IsValidPaymentRequest(tx, view, nMaxVersionPaymentRequest)){
+            if(tx.nVersion == CTransaction::PAYMENT_REQUEST_VERSION && CGovernance::IsValidPaymentRequest(tx, view, nMaxVersionPaymentRequest)){
                 if (!NewPaymentRequest(tx, uint256(), state))
                     return false;
             }
@@ -2410,20 +2410,20 @@ bool DisconnectBlock(const CBlock& block, CValidationState& state, const CBlockI
             int nMaxVersionProposal = fReducedQuorum ? Params().GetConsensus().nProposalMaxVersion : 2;
             int nMaxVersionPaymentRequest = fReducedQuorum ? Params().GetConsensus().nPaymentRequestMaxVersion : 2;
 
-            if(tx.nVersion == CTransaction::PROPOSAL_VERSION && CFund::IsValidProposal(tx, nMaxVersionProposal)) {
-                std::vector<std::pair<uint256, CFund::CProposal> > proposalIndex;
-                proposalIndex.push_back(make_pair(hash,CFund::CProposal()));
+            if(tx.nVersion == CTransaction::PROPOSAL_VERSION && CGovernance::IsValidProposal(tx, nMaxVersionProposal)) {
+                std::vector<std::pair<uint256, CGovernance::CProposal> > proposalIndex;
+                proposalIndex.push_back(make_pair(hash,CGovernance::CProposal()));
                 if (!pfClean && !pblocktree->UpdateProposalIndex(proposalIndex)) {
                     return AbortNode(state, "Failed to write proposal index");
                 }
             }
 
-            if(tx.nVersion == CTransaction::PAYMENT_REQUEST_VERSION && CFund::IsValidPaymentRequest(tx, view, nMaxVersionPaymentRequest)) {
-                std::vector<std::pair<uint256, CFund::CProposal> > proposalIndex;
-                std::vector<std::pair<uint256, CFund::CPaymentRequest> > paymentRequestIndex;
-                paymentRequestIndex.push_back(make_pair(hash,CFund::CPaymentRequest()));
-                CFund::CPaymentRequest prequest; CFund::CProposal proposal;
-                if(CFund::FindPaymentRequest(tx.hash, prequest) && CFund::FindProposal(prequest.proposalhash, proposal)) {
+            if(tx.nVersion == CTransaction::PAYMENT_REQUEST_VERSION && CGovernance::IsValidPaymentRequest(tx, view, nMaxVersionPaymentRequest)) {
+                std::vector<std::pair<uint256, CGovernance::CProposal> > proposalIndex;
+                std::vector<std::pair<uint256, CGovernance::CPaymentRequest> > paymentRequestIndex;
+                paymentRequestIndex.push_back(make_pair(hash,CGovernance::CPaymentRequest()));
+                CGovernance::CPaymentRequest prequest; CGovernance::CProposal proposal;
+                if(CGovernance::FindPaymentRequest(tx.hash, prequest) && CGovernance::FindProposal(prequest.proposalhash, proposal)) {
                     std::vector<uint256>::iterator position = std::find(proposal.vPayments.begin(), proposal.vPayments.end(), prequest.hash);
                     if (position != proposal.vPayments.end()) {
                         proposal.vPayments.erase(position);
@@ -2718,7 +2718,7 @@ public:
 
 bool NewProposal(const CTransaction& tx, const uint256& blockhash, const CAmount& nProposalFee, CValidationState& state)
 {
-    std::vector<std::pair<uint256, CFund::CProposal> > proposalIndex;
+    std::vector<std::pair<uint256, CGovernance::CProposal> > proposalIndex;
 
     UniValue metadata(UniValue::VOBJ);
     try {
@@ -2737,7 +2737,7 @@ bool NewProposal(const CTransaction& tx, const uint256& blockhash, const CAmount
         return error("%s: Could not read strDZeel of Proposal: %s\n", __func__, e.what());
     }
 
-    CFund::CProposal proposal;
+    CGovernance::CProposal proposal;
 
     proposal.nAmount = find_value(metadata, "n").get_int64();
     proposal.Address = find_value(metadata, "a").get_str();
@@ -2757,15 +2757,15 @@ bool NewProposal(const CTransaction& tx, const uint256& blockhash, const CAmount
     if (!pblocktree->UpdateProposalIndex(proposalIndex))
         return AbortNode(state, "Failed to write proposal index");
 
-    LogPrint("cfund","New proposal %s\n",tx.GetHash().ToString());
+    LogPrint("governance", "New proposal %s\n",tx.GetHash().ToString());
 
     return true;
 }
 
 bool NewPaymentRequest(const CTransaction& tx, const uint256& blockhash, CValidationState& state)
 {
-    std::vector<std::pair<uint256, CFund::CProposal> > proposalIndex;
-    std::vector<std::pair<uint256, CFund::CPaymentRequest> > paymentRequestIndex;
+    std::vector<std::pair<uint256, CGovernance::CProposal> > proposalIndex;
+    std::vector<std::pair<uint256, CGovernance::CPaymentRequest> > paymentRequestIndex;
 
     UniValue metadata(UniValue::VOBJ);
     try {
@@ -2784,7 +2784,7 @@ bool NewPaymentRequest(const CTransaction& tx, const uint256& blockhash, CValida
         return error("%s: Could not read strDZeel of Payment Request: %s\n", __func__, e.what());
     }  // May not return ever false, as transactions were already chcked.
 
-    CFund::CPaymentRequest prequest;
+    CGovernance::CPaymentRequest prequest;
 
     prequest.hash = tx.GetHash();
     prequest.nAmount = find_value(metadata, "n").get_int64();
@@ -2797,8 +2797,8 @@ bool NewPaymentRequest(const CTransaction& tx, const uint256& blockhash, CValida
         return error("%s: Payment request cannot have an amount less than 0\n", __func__);
     }
 
-    CFund::CProposal proposal;
-    if(!CFund::FindProposal(prequest.proposalhash, proposal))
+    CGovernance::CProposal proposal;
+    if(!CGovernance::FindProposal(prequest.proposalhash, proposal))
         return error("%s: Could not find parent proposal of Payment Request: %s\n", __func__,
                      proposal.hash.ToString(), prequest.proposalhash.ToString());
 
@@ -2815,7 +2815,7 @@ bool NewPaymentRequest(const CTransaction& tx, const uint256& blockhash, CValida
     if (!pblocktree->UpdatePaymentRequestIndex(paymentRequestIndex))
         return AbortNode(state, "Failed to write payment request index");
 
-    LogPrint("cfund","New payment request %s\n",tx.GetHash().ToString());
+    LogPrint("governance", "New payment request %s\n",tx.GetHash().ToString());
 
     return true;
 }
@@ -3039,8 +3039,8 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 if(tx.vout[j].IsProposalVote()) {
                     if(votes.count(hash) == 0) {
                         votes[hash] = vote;
-                        CFund::CProposal proposal;
-                        if(CFund::FindProposal(hash, proposal))
+                        CGovernance::CProposal proposal;
+                        if(CGovernance::FindProposal(hash, proposal))
                             if(proposal.CanVote())
                                 pindex->vProposalVotes.push_back(make_pair(hash, vote));
                     }
@@ -3048,14 +3048,14 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 else if (tx.vout[j].IsPaymentRequestVote()) {
                     if(votes.count(hash) == 0){
                         votes[hash] = vote;
-                        CFund::CPaymentRequest prequest; CFund::CProposal proposal;
-                        if(CFund::FindPaymentRequest(hash, prequest) && CFund::FindProposal(prequest.proposalhash, proposal)) {
+                        CGovernance::CPaymentRequest prequest; CGovernance::CProposal proposal;
+                        if(CGovernance::FindPaymentRequest(hash, prequest) && CGovernance::FindProposal(prequest.proposalhash, proposal)) {
                             if (mapBlockIndex.count(proposal.blockhash) == 0)
                                 continue;
                             CBlockIndex* pblockindex = mapBlockIndex[proposal.blockhash];
                             if(pblockindex == NULL)
                                 continue;
-                            if((proposal.CanRequestPayments() || proposal.fState == CFund::PENDING_VOTING_PREQ)
+                            if((proposal.CanRequestPayments() || proposal.fState == CGovernance::PENDING_VOTING_PREQ)
                                     && prequest.CanVote(view)
                                     && pindex->nHeight - pblockindex->nHeight > Params().GetConsensus().nCommunityFundMinAge)
                                 pindex->vPaymentRequestVotes.push_back(make_pair(hash, vote));
@@ -3071,11 +3071,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             int nMaxVersionPaymentRequest = fReducedQuorum ? Params().GetConsensus().nPaymentRequestMaxVersion : 2;
 
             if(tx.nVersion == CTransaction::PROPOSAL_VERSION) // Community Fund Proposal
-                if(!CFund::IsValidProposal(tx, nMaxVersionProposal))
+                if(!CGovernance::IsValidProposal(tx, nMaxVersionProposal))
                     return state.DoS(10, false, REJECT_INVALID, "bad-cfund-proposal");
 
             if(tx.nVersion == CTransaction::PAYMENT_REQUEST_VERSION) // Community Fund Payment Request
-                if(!CFund::IsValidPaymentRequest(tx, view, nMaxVersionPaymentRequest))
+                if(!CGovernance::IsValidPaymentRequest(tx, view, nMaxVersionPaymentRequest))
                     return state.DoS(10, false, REJECT_INVALID, "bad-cfund-payment-request");
         }
 
@@ -3293,12 +3293,12 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             int nMaxVersionProposal = fReducedQuorum ? Params().GetConsensus().nProposalMaxVersion : 2;
             int nMaxVersionPaymentRequest = fReducedQuorum ? Params().GetConsensus().nPaymentRequestMaxVersion : 2;
 
-            if(fContribution && tx.nVersion == CTransaction::PROPOSAL_VERSION && CFund::IsValidProposal(tx, nMaxVersionProposal)){
+            if(fContribution && tx.nVersion == CTransaction::PROPOSAL_VERSION && CGovernance::IsValidProposal(tx, nMaxVersionProposal)){
                 if (!NewProposal(tx, block.GetHash(), nProposalFee, state))
                     return false;
             }
 
-            if(tx.nVersion == CTransaction::PAYMENT_REQUEST_VERSION && CFund::IsValidPaymentRequest(tx, view, nMaxVersionPaymentRequest)){
+            if(tx.nVersion == CTransaction::PAYMENT_REQUEST_VERSION && CGovernance::IsValidPaymentRequest(tx, view, nMaxVersionPaymentRequest)){
                 if (!NewPaymentRequest(tx, block.GetHash(), state))
                     return false;
             }
@@ -3351,10 +3351,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             if(!isJson)
                 return state.DoS(100, error("CheckBlock() : coinbase pays too much (%d vs %d).", block.vtx[0].GetValueOut(), nPOWBlockReward));
             if(metadata[nPaymentRequestsCount].isStr()) {
-                CFund::CPaymentRequest prequest; CFund::CProposal proposal;
-                if(!CFund::FindPaymentRequest(metadata[nPaymentRequestsCount].get_str(), prequest))
+                CGovernance::CPaymentRequest prequest; CGovernance::CProposal proposal;
+                if(!CGovernance::FindPaymentRequest(metadata[nPaymentRequestsCount].get_str(), prequest))
                     return state.DoS(100, error("CheckBlock() : coinbase strdzeel refers wrong payment request hash."));
-                if(!CFund::FindProposal(prequest.proposalhash, proposal))
+                if(!CGovernance::FindProposal(prequest.proposalhash, proposal))
                     return state.DoS(100, error("CheckBlock() : coinbase strdzeel payment request does not have parent proposal."));
                 CTxDestination address;
                 bool fValidAddress = ExtractDestination(block.vtx[0].vout[i].scriptPubKey, address);
@@ -3367,11 +3367,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     return state.DoS(100, error("CheckBlock() : cant find payment request block %s.", prequest.blockhash.ToString()));
                 if(!(pindex->pprev->nHeight - pblockindex->nHeight > Params().GetConsensus().nCommunityFundMinAge))
                     return state.DoS(100, error("CheckBlock() : payment request not mature enough."));
-                if(block.vtx[0].vout[i].nValue != prequest.nAmount || prequest.fState != CFund::ACCEPTED || proposal.Address != CNavCoinAddress(address).ToString())
+                if(block.vtx[0].vout[i].nValue != prequest.nAmount || prequest.fState != CGovernance::ACCEPTED || proposal.Address != CNavCoinAddress(address).ToString())
                     return state.DoS(100, error("CheckBlock() : coinbase output does not match an accepted payment request"));
                 if(prequest.paymenthash != uint256() && pindex->pprev->nHeight >= Params().GetConsensus().nHeightv452Fork)
                     return state.DoS(100, error("CheckBlock() : coinbase output tries to pay an already paid payment request"));
-                std::vector<std::pair<uint256, CFund::CPaymentRequest> > paymentRequestIndex;
+                std::vector<std::pair<uint256, CGovernance::CPaymentRequest> > paymentRequestIndex;
                 prequest.paymenthash = block.GetHash();
                 paymentRequestIndex.push_back(make_pair(prequest.hash, prequest));
                 if (!pblocktree->UpdatePaymentRequestIndex(paymentRequestIndex))
@@ -3736,13 +3736,13 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
     // Update chainActive and related variables.
     UpdateTip(pindexDelete->pprev, chainparams);
 
-    std::vector<CFund::CPaymentRequest> vecPaymentRequest;
-    std::vector<CFund::CProposal> vecProposal;
-    std::vector<std::pair<uint256, CFund::CProposal>> vecProposalsToUpdate;
-    std::vector<std::pair<uint256, CFund::CPaymentRequest>> vecPaymentRequestsToUpdate;
+    std::vector<CGovernance::CPaymentRequest> vecPaymentRequest;
+    std::vector<CGovernance::CProposal> vecProposal;
+    std::vector<std::pair<uint256, CGovernance::CProposal>> vecProposalsToUpdate;
+    std::vector<std::pair<uint256, CGovernance::CPaymentRequest>> vecPaymentRequestsToUpdate;
     std::map<uint256, std::pair<int, int>> vCacheProposalsToUpdate;
     std::map<uint256, std::pair<int, int>> vCachePaymentRequestToUpdate;
-    CFund::CProposal proposal; CFund::CPaymentRequest prequest;
+    CGovernance::CProposal proposal; CGovernance::CPaymentRequest prequest;
     std::map<uint256, bool> vSeen;
 
     if(pblocktree->GetPaymentRequestIndex(vecPaymentRequest)){
@@ -3755,7 +3755,7 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
             }
             if(prequest.blockhash == pindexDelete->GetBlockHash()) {
                 prequest.blockhash = uint256();
-                prequest.fState = CFund::NIL;
+                prequest.fState = CGovernance::NIL;
                 fUpdate = true;
             }
             if(fUpdate) {
@@ -3773,7 +3773,7 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
             proposal = vecProposal[i];
             if(proposal.blockhash == pindexDelete->GetBlockHash()) {
                 proposal.blockhash = uint256();
-                proposal.fState = CFund::NIL;
+                proposal.fState = CGovernance::NIL;
                 vecProposalsToUpdate.push_back(make_pair(proposal.hash, proposal));
                 if (!pblocktree->UpdateProposalIndex(vecProposalsToUpdate)) {
                     AbortNode(state, "Failed to write proposal index");
@@ -3784,7 +3784,7 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
     }
 
     for(unsigned int i = 0; i < pindexDelete->vProposalVotes.size(); i++) {
-        if(!CFund::FindProposal(pindexDelete->vProposalVotes[i].first, proposal))
+        if(!CGovernance::FindProposal(pindexDelete->vProposalVotes[i].first, proposal))
             continue;
         if(vSeen.count(pindexDelete->vProposalVotes[i].first) == 0) {
             if(vCacheProposalsToUpdate.count(pindexDelete->vProposalVotes[i].first) == 0)
@@ -3800,9 +3800,9 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
     vSeen.clear();
 
     for(unsigned int i = 0; i < pindexDelete->vPaymentRequestVotes.size(); i++) {
-        if(!CFund::FindPaymentRequest(pindexDelete->vPaymentRequestVotes[i].first, prequest))
+        if(!CGovernance::FindPaymentRequest(pindexDelete->vPaymentRequestVotes[i].first, prequest))
             continue;
-        if(!CFund::FindProposal(prequest.proposalhash, proposal))
+        if(!CGovernance::FindProposal(prequest.proposalhash, proposal))
             continue;
         if (mapBlockIndex.count(proposal.blockhash) == 0)
             continue;
@@ -3823,7 +3823,7 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
     std::map<uint256, std::pair<int, int>>::iterator it;
 
     for(it = vCacheProposalsToUpdate.begin(); it != vCacheProposalsToUpdate.end(); it++) {
-        if(!CFund::FindProposal(it->first, proposal))
+        if(!CGovernance::FindProposal(it->first, proposal))
             continue;
         if((it->second.first < 0 || it->second.second < 0) && (pindexDelete->nHeight % Params().GetConsensus().nBlocksPerVotingCycle != 0))
             AbortNode(state,"Negative amount of votes when disconnecting tip, possible corrupted DB");
@@ -3832,7 +3832,7 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
         vecProposalsToUpdate.push_back(make_pair(proposal.hash, proposal));
     }
     for(it = vCachePaymentRequestToUpdate.begin(); it != vCachePaymentRequestToUpdate.end(); it++) {
-        if(!CFund::FindPaymentRequest(it->first, prequest))
+        if(!CGovernance::FindPaymentRequest(it->first, prequest))
             continue;
         if((it->second.first < 0 || it->second.second < 0) && (pindexDelete->nHeight % Params().GetConsensus().nBlocksPerVotingCycle != 0))
             AbortNode(state,"Negative amount of votes when disconnecting tip, possible corrupted DB");
@@ -3937,7 +3937,7 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
     AssertLockHeld(cs_main);
 
     int64_t nTimeStart = GetTimeMicros();
-    CFund::CPaymentRequest prequest; CFund::CProposal proposal;
+    CGovernance::CPaymentRequest prequest; CGovernance::CProposal proposal;
 
     int nBlocks = (pindexNew->nHeight % Params().GetConsensus().nBlocksPerVotingCycle) + 1;
     CBlockIndex* pindexblock = pindexNew;
@@ -3955,7 +3955,7 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
     while(nBlocks > 0 && pindexblock != NULL) {
         vSeen.clear();
         for(unsigned int i = 0; i < pindexblock->vProposalVotes.size(); i++) {
-            if(!CFund::FindProposal(pindexblock->vProposalVotes[i].first, proposal))
+            if(!CGovernance::FindProposal(pindexblock->vProposalVotes[i].first, proposal))
                 continue;
             if(vSeen.count(pindexblock->vProposalVotes[i].first) == 0) {
                 if(vCacheProposalsToUpdate.count(pindexblock->vProposalVotes[i].first) == 0)
@@ -3968,9 +3968,9 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
             }
         }
         for(unsigned int i = 0; i < pindexblock->vPaymentRequestVotes.size(); i++) {
-            if(!CFund::FindPaymentRequest(pindexblock->vPaymentRequestVotes[i].first, prequest))
+            if(!CGovernance::FindPaymentRequest(pindexblock->vPaymentRequestVotes[i].first, prequest))
                 continue;
-            if(!CFund::FindProposal(prequest.proposalhash, proposal))
+            if(!CGovernance::FindProposal(prequest.proposalhash, proposal))
                 continue;
             if (mapBlockIndex.count(proposal.blockhash) == 0)
                 continue;
@@ -3998,10 +3998,10 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
 
     int64_t nTimeStart3 = GetTimeMicros();
     std::map<uint256, std::pair<int, int>>::iterator it;
-    std::vector<std::pair<uint256, CFund::CProposal>> vecProposalsToUpdate;
-    std::vector<std::pair<uint256, CFund::CPaymentRequest>> vecPaymentRequestsToUpdate;
+    std::vector<std::pair<uint256, CGovernance::CProposal>> vecProposalsToUpdate;
+    std::vector<std::pair<uint256, CGovernance::CPaymentRequest>> vecPaymentRequestsToUpdate;
     for(it = vCacheProposalsToUpdate.begin(); it != vCacheProposalsToUpdate.end(); it++) {
-        if(!CFund::FindProposal(it->first, proposal))
+        if(!CGovernance::FindProposal(it->first, proposal))
             continue;
         proposal.nVotesYes = it->second.first;
         proposal.nVotesNo = it->second.second;
@@ -4009,7 +4009,7 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
         vecProposalsToUpdate.push_back(make_pair(proposal.hash, proposal));
     }
     for(it = vCachePaymentRequestToUpdate.begin(); it != vCachePaymentRequestToUpdate.end(); it++) {
-        if(!CFund::FindPaymentRequest(it->first, prequest))
+        if(!CGovernance::FindPaymentRequest(it->first, prequest))
             continue;
         prequest.nVotesYes = it->second.first;
         prequest.nVotesNo = it->second.second;
@@ -4027,7 +4027,7 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
     int64_t nTimeEnd3 = GetTimeMicros();
     LogPrint("bench-cfund", "  - CFund update votes: %.2fms\n", (nTimeEnd3 - nTimeStart3) * 0.001);
 
-    std::vector<CFund::CPaymentRequest> vecPaymentRequest;
+    std::vector<CGovernance::CPaymentRequest> vecPaymentRequest;
 
     int64_t nTimeStart4 = GetTimeMicros();
     if(pblocktree->GetPaymentRequestIndex(vecPaymentRequest)){
@@ -4047,7 +4047,7 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
 
             CBlockIndex* pblockindex = mapBlockIndex[prequest.txblockhash];
 
-            if(!CFund::FindProposal(prequest.proposalhash, proposal))
+            if(!CGovernance::FindProposal(prequest.proposalhash, proposal))
                 continue;
 
             auto nCreatedOnCycle = (unsigned )(pblockindex->nHeight / Params().GetConsensus().nBlocksPerVotingCycle);
@@ -4058,41 +4058,41 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
             auto oldState = prequest.fState;
             auto oldCycle = prequest.nVotingCycle;
 
-            if((prequest.fState == CFund::NIL || fUndo) && nVotingCycles != prequest.nVotingCycle) {
+            if((prequest.fState == CGovernance::NIL || fUndo) && nVotingCycles != prequest.nVotingCycle) {
                 prequest.nVotingCycle = nVotingCycles;
                 fUpdate = true;
             }
 
             if((pindexNew->nHeight + 1) % Params().GetConsensus().nBlocksPerVotingCycle == 0) {
-                if((!prequest.IsExpired() && prequest.fState == CFund::EXPIRED) ||
-                        (!prequest.IsRejected() && prequest.fState == CFund::REJECTED)){
-                    prequest.fState = CFund::NIL;
+                if((!prequest.IsExpired() && prequest.fState == CGovernance::EXPIRED) ||
+                        (!prequest.IsRejected() && prequest.fState == CGovernance::REJECTED)){
+                    prequest.fState = CGovernance::NIL;
                     prequest.blockhash = uint256();
                     fUpdate = true;
                 }
-                if(!prequest.IsAccepted() && prequest.fState == CFund::ACCEPTED) {
-                    prequest.fState = CFund::NIL;
+                if(!prequest.IsAccepted() && prequest.fState == CGovernance::ACCEPTED) {
+                    prequest.fState = CGovernance::NIL;
                     prequest.blockhash = uint256();
                     fUpdate = true;
                 }
 
                 if(prequest.IsExpired()) {
-                    if (prequest.fState != CFund::EXPIRED) {
-                        prequest.fState = CFund::EXPIRED;
+                    if (prequest.fState != CGovernance::EXPIRED) {
+                        prequest.fState = CGovernance::EXPIRED;
                         prequest.blockhash = pindexNew->GetBlockHash();
                         fUpdate = true;
                     }
                 } else if(prequest.IsRejected()) {
-                    if (prequest.fState != CFund::REJECTED) {
-                        prequest.fState = CFund::REJECTED;
+                    if (prequest.fState != CGovernance::REJECTED) {
+                        prequest.fState = CGovernance::REJECTED;
                         prequest.blockhash = pindexNew->GetBlockHash();
                         fUpdate = true;
                     }
-                } else if(prequest.fState == CFund::NIL){
-                    if((proposal.fState == CFund::ACCEPTED || proposal.fState == CFund::PENDING_VOTING_PREQ) && prequest.IsAccepted()) {
+                } else if(prequest.fState == CGovernance::NIL){
+                    if((proposal.fState == CGovernance::ACCEPTED || proposal.fState == CGovernance::PENDING_VOTING_PREQ) && prequest.IsAccepted()) {
                         if(prequest.nAmount <= pindexNew->nCFLocked && prequest.nAmount <= proposal.GetAvailable(coins)) {
                             pindexNew->nCFLocked -= prequest.nAmount;
-                            prequest.fState = CFund::ACCEPTED;
+                            prequest.fState = CGovernance::ACCEPTED;
                             prequest.blockhash = pindexNew->GetBlockHash();
                             fUpdate = true;
                         }
@@ -4100,13 +4100,13 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
                 }
             }
 
-            if (fUndo && fUpdate && prequest.fState == oldState && prequest.fState != CFund::NIL && prequest.nVotingCycle != oldCycle)
+            if (fUndo && fUpdate && prequest.fState == oldState && prequest.fState != CGovernance::NIL && prequest.nVotingCycle != oldCycle)
                 prequest.nVotingCycle = oldCycle;
 
             if((pindexNew->nHeight) % Params().GetConsensus().nBlocksPerVotingCycle == 0)
             {
-                if (!vSeen.count(prequest.hash) && prequest.fState == CFund::NIL
-                        && !((proposal.fState == CFund::ACCEPTED || proposal.fState == CFund::PENDING_VOTING_PREQ) && prequest.IsAccepted())){
+                if (!vSeen.count(prequest.hash) && prequest.fState == CGovernance::NIL
+                        && !((proposal.fState == CGovernance::ACCEPTED || proposal.fState == CGovernance::PENDING_VOTING_PREQ) && prequest.IsAccepted())){
                     prequest.nVotesYes = 0;
                     prequest.nVotesNo = 0;
                     fUpdate = true;
@@ -4125,7 +4125,7 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
     int64_t nTimeEnd4 = GetTimeMicros();
     LogPrint("bench-cfund", "  - CFund update payment request status: %.2fms\n", (nTimeEnd4 - nTimeStart4) * 0.001);
 
-    std::vector<CFund::CProposal> vecProposal;
+    std::vector<CGovernance::CProposal> vecProposal;
 
     int64_t nTimeStart5 = GetTimeMicros();
     if(pblocktree->GetProposalIndex(vecProposal)){
@@ -4152,55 +4152,55 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
             auto oldState = proposal.fState;
             auto oldCycle = proposal.nVotingCycle;
 
-            if((proposal.fState == CFund::NIL || fUndo) && nVotingCycles != proposal.nVotingCycle) {
+            if((proposal.fState == CGovernance::NIL || fUndo) && nVotingCycles != proposal.nVotingCycle) {
                 proposal.nVotingCycle = nVotingCycles;
                 fUpdate = true;
             }
 
             if((pindexNew->nHeight + 1) % Params().GetConsensus().nBlocksPerVotingCycle == 0) {
-                if((!proposal.IsExpired(pindexNew->GetBlockTime()) && (proposal.fState == CFund::EXPIRED || proposal.fState == CFund::PENDING_VOTING_PREQ)) ||
-                   (!proposal.IsRejected() && proposal.fState == CFund::REJECTED)){
-                    proposal.fState = CFund::NIL;
+                if((!proposal.IsExpired(pindexNew->GetBlockTime()) && (proposal.fState == CGovernance::EXPIRED || proposal.fState == CGovernance::PENDING_VOTING_PREQ)) ||
+                   (!proposal.IsRejected() && proposal.fState == CGovernance::REJECTED)){
+                    proposal.fState = CGovernance::NIL;
                     proposal.blockhash = uint256();
                     fUpdate = true;
                 }
-                if(!proposal.IsAccepted() && (proposal.fState == CFund::ACCEPTED || proposal.fState == CFund::PENDING_FUNDS)) {
-                    proposal.fState = CFund::NIL;
+                if(!proposal.IsAccepted() && (proposal.fState == CGovernance::ACCEPTED || proposal.fState == CGovernance::PENDING_FUNDS)) {
+                    proposal.fState = CGovernance::NIL;
                     proposal.blockhash = uint256();
                     fUpdate = true;
                 }
 
                 if(proposal.IsExpired(pindexNew->GetBlockTime())){
-                    if (proposal.fState != CFund::EXPIRED) {
+                    if (proposal.fState != CGovernance::EXPIRED) {
                         if (proposal.HasPendingPaymentRequests(coins)) {
-                            proposal.fState = CFund::PENDING_VOTING_PREQ;
+                            proposal.fState = CGovernance::PENDING_VOTING_PREQ;
                             fUpdate = true;
                         } else {
-                            if(proposal.fState == CFund::ACCEPTED || proposal.fState == CFund::PENDING_VOTING_PREQ) {
+                            if(proposal.fState == CGovernance::ACCEPTED || proposal.fState == CGovernance::PENDING_VOTING_PREQ) {
                                 pindexNew->nCFSupply += proposal.GetAvailable(coins);
                                 pindexNew->nCFLocked -= proposal.GetAvailable(coins);
                             }
-                            proposal.fState = CFund::EXPIRED;
+                            proposal.fState = CGovernance::EXPIRED;
                             proposal.blockhash = pindexNew->GetBlockHash();
                             fUpdate = true;
                         }
                     }
                 } else if(proposal.IsRejected()){
-                    if(proposal.fState != CFund::REJECTED) {
-                        proposal.fState = CFund::REJECTED;
+                    if(proposal.fState != CGovernance::REJECTED) {
+                        proposal.fState = CGovernance::REJECTED;
                         proposal.blockhash = pindexNew->GetBlockHash();
                         fUpdate = true;
                     }
                 } else if(proposal.IsAccepted()){
-                    if((proposal.fState == CFund::NIL || proposal.fState == CFund::PENDING_FUNDS)) {
+                    if((proposal.fState == CGovernance::NIL || proposal.fState == CGovernance::PENDING_FUNDS)) {
                         if(pindexNew->nCFSupply >= proposal.GetAvailable(coins)) {
                             pindexNew->nCFSupply -= proposal.GetAvailable(coins);
                             pindexNew->nCFLocked += proposal.GetAvailable(coins);
-                            proposal.fState = CFund::ACCEPTED;
+                            proposal.fState = CGovernance::ACCEPTED;
                             proposal.blockhash = pindexNew->GetBlockHash();
                             fUpdate = true;
-                        } else if(proposal.fState != CFund::PENDING_FUNDS) {
-                            proposal.fState = CFund::PENDING_FUNDS;
+                        } else if(proposal.fState != CGovernance::PENDING_FUNDS) {
+                            proposal.fState = CGovernance::PENDING_FUNDS;
                             proposal.blockhash = uint256();
                             fUpdate = true;
                         }
@@ -4208,12 +4208,12 @@ void CountVotes(CValidationState& state, CBlockIndex *pindexNew, bool fUndo, CCo
                 }
             }
 
-            if (fUndo && fUpdate && proposal.fState == oldState && proposal.fState != CFund::NIL && proposal.nVotingCycle != oldCycle)
+            if (fUndo && fUpdate && proposal.fState == oldState && proposal.fState != CGovernance::NIL && proposal.nVotingCycle != oldCycle)
                 proposal.nVotingCycle = oldCycle;
 
             if((pindexNew->nHeight) % Params().GetConsensus().nBlocksPerVotingCycle == 0)
             {
-                if (!vSeen.count(prequest.hash) && proposal.fState == CFund::NIL){
+                if (!vSeen.count(prequest.hash) && proposal.fState == CGovernance::NIL){
                     proposal.nVotesYes = 0;
                     proposal.nVotesNo = 0;
                     fUpdate = true;

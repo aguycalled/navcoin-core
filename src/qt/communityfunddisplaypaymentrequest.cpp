@@ -9,12 +9,12 @@
 #include <iomanip>
 #include <sstream>
 #include <ctime>
-#include "consensus/cfund.h"
+#include "consensus/governance.h"
 #include "wallet/wallet.h"
 #include "base58.h"
 #include "chain.h"
 
-CommunityFundDisplayPaymentRequest::CommunityFundDisplayPaymentRequest(QWidget *parent, CFund::CPaymentRequest prequest) :
+CommunityFundDisplayPaymentRequest::CommunityFundDisplayPaymentRequest(QWidget *parent, CGovernance::CPaymentRequest prequest) :
     QWidget(parent),
     ui(new Ui::CommunityFundDisplayPaymentRequest),
     prequest(prequest)
@@ -76,7 +76,7 @@ void CommunityFundDisplayPaymentRequest::refresh()
     }
 
     // If prequest is accepted, show when it was accepted
-    if (prequest.fState == CFund::ACCEPTED)
+    if (prequest.fState == CGovernance::ACCEPTED)
     {
         std::string duration_title = "Accepted on: ";
         std::time_t t = static_cast<time_t>(proptime);
@@ -89,7 +89,7 @@ void CommunityFundDisplayPaymentRequest::refresh()
     }
 
     // If prequest is pending show voting cycles left
-    if (prequest.fState == CFund::NIL)
+    if (prequest.fState == CGovernance::NIL)
     {
         std::string duration_title = "Voting Cycle: ";
         std::string duration = std::to_string(prequest.nVotingCycle) +  " of " + std::to_string(Params().GetConsensus().nCyclesPaymentRequestVoting);
@@ -98,7 +98,7 @@ void CommunityFundDisplayPaymentRequest::refresh()
     }
 
     // If prequest is rejected, show when it was rejected
-    if (prequest.fState == CFund::REJECTED)
+    if (prequest.fState == CGovernance::REJECTED)
     {
         std::string expiry_title = "Rejected on: ";
         std::time_t t = static_cast<time_t>(proptime);
@@ -111,9 +111,9 @@ void CommunityFundDisplayPaymentRequest::refresh()
     }
 
     // If expired show when it expired
-    if (prequest.fState == CFund::EXPIRED || status.find("expired") != string::npos)
+    if (prequest.fState == CGovernance::EXPIRED || status.find("expired") != string::npos)
     {
-        if (prequest.fState == CFund::EXPIRED)
+        if (prequest.fState == CGovernance::EXPIRED)
         {
             std::string expiry_title = "Expired on: ";
             std::time_t t = static_cast<time_t>(proptime);
@@ -135,10 +135,10 @@ void CommunityFundDisplayPaymentRequest::refresh()
 
     // Shade in yes/no buttons is user has voted
     // If the prequest is pending and not prematurely expired (ie can be voted on):
-    if (prequest.fState == CFund::NIL && prequest.GetState().find("expired") == string::npos)
+    if (prequest.fState == CGovernance::NIL && prequest.GetState().find("expired") == string::npos)
     {
         // Get prequest votes list
-        CFund::CPaymentRequest preq = prequest;
+        CGovernance::CPaymentRequest preq = prequest;
         auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
                                 [&preq](const std::pair<std::string, bool>& element){ return element.first == preq.hash.ToString();} );
         if (it != vAddedPaymentRequestVotes.end())
@@ -193,17 +193,17 @@ void CommunityFundDisplayPaymentRequest::click_buttonBoxVote(QAbstractButton *bu
 
     if (ui->buttonBoxVote->buttonRole(button) == QDialogButtonBox::YesRole)
     {
-        CFund::VotePaymentRequest(prequest.hash.ToString(), true, duplicate);
+        CGovernance::VotePaymentRequest(prequest.hash.ToString(), true, duplicate);
         refresh();
     }
     else if(ui->buttonBoxVote->buttonRole(button) == QDialogButtonBox::NoRole)
     {
-        CFund::VotePaymentRequest(prequest.hash.ToString(), false, duplicate);
+        CGovernance::VotePaymentRequest(prequest.hash.ToString(), false, duplicate);
         refresh();
     }
     else if(ui->buttonBoxVote->buttonRole(button) == QDialogButtonBox::RejectRole)
     {
-        CFund::RemoveVotePaymentRequest(prequest.hash.ToString());
+        CGovernance::RemoveVotePaymentRequest(prequest.hash.ToString());
         refresh();
     }
     else {

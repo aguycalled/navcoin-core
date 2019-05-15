@@ -7,7 +7,7 @@
 #define NAVCOIN_PRIMITIVES_TRANSACTION_H
 
 #include "amount.h"
-#include "consensus/cfund.h"
+#include "consensus/governance.h"
 #include "script/script.h"
 #include "serialize.h"
 #include "uint256.h"

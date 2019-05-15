@@ -165,20 +165,20 @@ bool CBlockTreeDB::WriteTxIndex(const std::vector<std::pair<uint256, CDiskTxPos>
     return WriteBatch(batch);
 }
 
-bool CBlockTreeDB::ReadProposalIndex(const uint256 &proposalid, CFund::CProposal &proposal) {
+bool CBlockTreeDB::ReadProposalIndex(const uint256 &proposalid, CGovernance::CProposal &proposal) {
     return Read(make_pair(DB_PROPINDEX, proposalid), proposal);
 }
 
-bool CBlockTreeDB::WriteProposalIndex(const std::vector<std::pair<uint256, CFund::CProposal> >&vect) {
+bool CBlockTreeDB::WriteProposalIndex(const std::vector<std::pair<uint256, CGovernance::CProposal> >&vect) {
     CDBBatch batch(*this);
-    for (std::vector<std::pair<uint256,CFund::CProposal> >::const_iterator it=vect.begin(); it!=vect.end(); it++)
+    for (std::vector<std::pair<uint256,CGovernance::CProposal> >::const_iterator it=vect.begin(); it!=vect.end(); it++)
         batch.Write(make_pair(DB_PROPINDEX, it->first), it->second);
     return WriteBatch(batch);
 }
 
-bool CBlockTreeDB::UpdateProposalIndex(const std::vector<std::pair<uint256, CFund::CProposal> >&vect) {
+bool CBlockTreeDB::UpdateProposalIndex(const std::vector<std::pair<uint256, CGovernance::CProposal> >&vect) {
     CDBBatch batch(*this);
-    for (std::vector<std::pair<uint256,CFund::CProposal> >::const_iterator it=vect.begin(); it!=vect.end(); it++) {
+    for (std::vector<std::pair<uint256,CGovernance::CProposal> >::const_iterator it=vect.begin(); it!=vect.end(); it++) {
         if (it->second.IsNull()) {
             batch.Erase(make_pair(DB_PROPINDEX, it->first));
         } else {
@@ -188,7 +188,7 @@ bool CBlockTreeDB::UpdateProposalIndex(const std::vector<std::pair<uint256, CFun
     return WriteBatch(batch, true);
 }
 
-bool CBlockTreeDB::GetProposalIndex(std::vector<CFund::CProposal>&vect) {
+bool CBlockTreeDB::GetProposalIndex(std::vector<CGovernance::CProposal>&vect) {
     boost::scoped_ptr<CDBIterator> pcursor(NewIterator());
 
     pcursor->Seek(make_pair(DB_PROPINDEX, uint256()));
@@ -197,7 +197,7 @@ bool CBlockTreeDB::GetProposalIndex(std::vector<CFund::CProposal>&vect) {
         boost::this_thread::interruption_point();
         std::pair<char, uint256> key;
         if (pcursor->GetKey(key) && key.first == DB_PROPINDEX) {
-            CFund::CProposal proposal;
+            CGovernance::CProposal proposal;
             if (pcursor->GetValue(proposal)) {
                 vect.push_back(proposal);
                 pcursor->Next();
@@ -209,12 +209,12 @@ bool CBlockTreeDB::GetProposalIndex(std::vector<CFund::CProposal>&vect) {
         }
     }
 
-    std::sort(vect.begin(), vect.end(), make_member_comparer<std::greater>(&CFund::CProposal::nFee));
+    std::sort(vect.begin(), vect.end(), make_member_comparer<std::greater>(&CGovernance::CProposal::nFee));
 
     return true;
 }
 
-CFund::CProposal CBlockTreeDB::GetProposal(uint256 hash)
+CGovernance::CProposal CBlockTreeDB::GetProposal(uint256 hash)
 {
     boost::scoped_ptr<CDBIterator> pcursor(NewIterator());
 
@@ -224,7 +224,7 @@ CFund::CProposal CBlockTreeDB::GetProposal(uint256 hash)
         boost::this_thread::interruption_point();
         std::pair<char, uint256> key;
         if (pcursor->GetKey(key) && key.first == DB_PROPINDEX) {
-            CFund::CProposal proposal;
+            CGovernance::CProposal proposal;
             if (pcursor->GetValue(proposal)) {
                 if(proposal.hash == hash){
                     return proposal;
@@ -232,30 +232,30 @@ CFund::CProposal CBlockTreeDB::GetProposal(uint256 hash)
                 }
             pcursor->Next();
             } else {
-                return CFund::CProposal();
+                return CGovernance::CProposal();
             }
         } else {
             break;
         }
     }
 
-    return CFund::CProposal();
+    return CGovernance::CProposal();
 }
 
-bool CBlockTreeDB::ReadPaymentRequestIndex(const uint256 &prequestid, CFund::CPaymentRequest &prequest) {
+bool CBlockTreeDB::ReadPaymentRequestIndex(const uint256 &prequestid, CGovernance::CPaymentRequest &prequest) {
     return Read(make_pair(DB_PREQINDEX, prequestid), prequest);
 }
 
-bool CBlockTreeDB::WritePaymentRequestIndex(const std::vector<std::pair<uint256, CFund::CPaymentRequest> >&vect) {
+bool CBlockTreeDB::WritePaymentRequestIndex(const std::vector<std::pair<uint256, CGovernance::CPaymentRequest> >&vect) {
     CDBBatch batch(*this);
-    for (std::vector<std::pair<uint256,CFund::CPaymentRequest> >::const_iterator it=vect.begin(); it!=vect.end(); it++)
+    for (std::vector<std::pair<uint256,CGovernance::CPaymentRequest> >::const_iterator it=vect.begin(); it!=vect.end(); it++)
         batch.Write(make_pair(DB_PREQINDEX, it->first), it->second);
     return WriteBatch(batch);
 }
 
-bool CBlockTreeDB::UpdatePaymentRequestIndex(const std::vector<std::pair<uint256, CFund::CPaymentRequest> >&vect) {
+bool CBlockTreeDB::UpdatePaymentRequestIndex(const std::vector<std::pair<uint256, CGovernance::CPaymentRequest> >&vect) {
     CDBBatch batch(*this);
-    for (std::vector<std::pair<uint256,CFund::CPaymentRequest> >::const_iterator it=vect.begin(); it!=vect.end(); it++) {
+    for (std::vector<std::pair<uint256,CGovernance::CPaymentRequest> >::const_iterator it=vect.begin(); it!=vect.end(); it++) {
         if (it->second.IsNull()) {
             batch.Erase(make_pair(DB_PREQINDEX, it->first));
         } else {
@@ -265,7 +265,7 @@ bool CBlockTreeDB::UpdatePaymentRequestIndex(const std::vector<std::pair<uint256
     return WriteBatch(batch);
 }
 
-bool CBlockTreeDB::GetPaymentRequestIndex(std::vector<CFund::CPaymentRequest>&vect) {
+bool CBlockTreeDB::GetPaymentRequestIndex(std::vector<CGovernance::CPaymentRequest>&vect) {
     boost::scoped_ptr<CDBIterator> pcursor(NewIterator());
 
     pcursor->Seek(make_pair(DB_PREQINDEX, uint256()));
@@ -274,7 +274,7 @@ bool CBlockTreeDB::GetPaymentRequestIndex(std::vector<CFund::CPaymentRequest>&ve
         boost::this_thread::interruption_point();
         std::pair<char, uint256> key;
         if (pcursor->GetKey(key) && key.first == DB_PREQINDEX) {
-            CFund::CPaymentRequest prequest;
+            CGovernance::CPaymentRequest prequest;
             if (pcursor->GetValue(prequest)) {
                 vect.push_back(prequest);
                 pcursor->Next();

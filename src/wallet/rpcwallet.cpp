@@ -6,7 +6,7 @@
 #include "amount.h"
 #include "base58.h"
 #include "chain.h"
-#include "consensus/cfund.h"
+#include "consensus/governance.h"
 #include "core_io.h"
 #include "init.h"
 #include "main.h"
@@ -405,7 +405,7 @@ static void SendMoney(const CTxDestination &address, CAmount nValue, bool fSubtr
     CScript scriptPubKey = GetScriptForDestination(address);
 
     if(donate)
-      CFund::SetScriptForCommunityFundContribution(scriptPubKey);
+      CGovernance::SetScriptForCommunityFundContribution(scriptPubKey);
 
     // Create and send the transaction
     CReserveKey reservekey(pwalletMain);
@@ -592,7 +592,7 @@ UniValue createproposal(const UniValue& params, bool fHelp)
     strDZeel.push_back(Pair("a",Address));
     strDZeel.push_back(Pair("d",nDeadline));
     strDZeel.push_back(Pair("s",sDesc));
-    strDZeel.push_back(Pair("v",IsReducedCFundQuorumEnabled(chainActive.Tip(), Params().GetConsensus()) ? CFund::CProposal::CURRENT_VERSION : 2));
+    strDZeel.push_back(Pair("v",IsReducedCFundQuorumEnabled(chainActive.Tip(), Params().GetConsensus()) ? CGovernance::CProposal::CURRENT_VERSION : 2));
 
     wtx.strDZeel = strDZeel.write();
     wtx.nCustomVersion = CTransaction::PROPOSAL_VERSION;
@@ -655,12 +655,12 @@ UniValue createpaymentrequest(const UniValue& params, bool fHelp)
 
     LOCK2(cs_main, pwalletMain->cs_wallet);
 
-    CFund::CProposal proposal;
+    CGovernance::CProposal proposal;
 
-    if(!CFund::FindProposal(params[0].get_str(),proposal))
+    if(!CGovernance::FindProposal(params[0].get_str(),proposal))
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid proposal hash.");
 
-    if(proposal.fState != CFund::ACCEPTED)
+    if(proposal.fState != CGovernance::ACCEPTED)
         throw JSONRPCError(RPC_TYPE_ERROR, "Proposal has not been accepted.");
 
     CNavCoinAddress address(proposal.Address);
@@ -712,7 +712,7 @@ UniValue createpaymentrequest(const UniValue& params, bool fHelp)
     strDZeel.push_back(Pair("s",Signature));
     strDZeel.push_back(Pair("r",sRandom));
     strDZeel.push_back(Pair("i",id));
-    strDZeel.push_back(Pair("v",IsReducedCFundQuorumEnabled(chainActive.Tip(), Params().GetConsensus()) ? CFund::CPaymentRequest::CURRENT_VERSION : 2));
+    strDZeel.push_back(Pair("v",IsReducedCFundQuorumEnabled(chainActive.Tip(), Params().GetConsensus()) ? CGovernance::CPaymentRequest::CURRENT_VERSION : 2));
 
     wtx.strDZeel = strDZeel.write();
     wtx.nCustomVersion = CTransaction::PAYMENT_REQUEST_VERSION;
@@ -3380,11 +3380,11 @@ UniValue proposalvotelist(const UniValue& params, bool fHelp)
     UniValue novotes(UniValue::VARR);
     UniValue nullvotes(UniValue::VARR);
 
-    std::vector<CFund::CProposal> vec;
+    std::vector<CGovernance::CProposal> vec;
      if(pblocktree->GetProposalIndex(vec))
      {
-         BOOST_FOREACH(const CFund::CProposal& proposal, vec) {
-             if (proposal.fState != CFund::NIL)
+         BOOST_FOREACH(const CGovernance::CProposal& proposal, vec) {
+             if (proposal.fState != CGovernance::NIL)
                  continue;
              auto it = std::find_if( vAddedProposalVotes.begin(), vAddedProposalVotes.end(),
                  [&proposal](const std::pair<std::string, bool>& element){ return element.first == proposal.hash.ToString();} );
@@ -3432,7 +3432,7 @@ UniValue proposalvote(const UniValue& params, bool fHelp)
 
     if (strCommand == "yes")
     {
-      bool ret = CFund::VoteProposal(strHash,true,duplicate);
+      bool ret = CGovernance::VoteProposal(strHash,true,duplicate);
       if (duplicate) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("The proposal is already in the list: ")+strHash);
       } else if (ret) {
@@ -3441,7 +3441,7 @@ UniValue proposalvote(const UniValue& params, bool fHelp)
     }
     else if (strCommand == "no")
     {
-      bool ret = CFund::VoteProposal(strHash,false,duplicate);
+      bool ret = CGovernance::VoteProposal(strHash,false,duplicate);
       if (duplicate) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("The proposal is already in the list: ")+strHash);
       } else if (ret) {
@@ -3450,7 +3450,7 @@ UniValue proposalvote(const UniValue& params, bool fHelp)
     }
     else if(strCommand == "remove")
     {
-      bool ret = CFund::RemoveVoteProposal(strHash);
+      bool ret = CGovernance::RemoveVoteProposal(strHash);
       if (ret) {
         return NullUniValue;
       } else {
@@ -3482,11 +3482,11 @@ UniValue paymentrequestvotelist(const UniValue& params, bool fHelp)
     UniValue novotes(UniValue::VARR);
     UniValue nullvotes(UniValue::VARR);
 
-    std::vector<CFund::CPaymentRequest> vec;
+    std::vector<CGovernance::CPaymentRequest> vec;
      if(pblocktree->GetPaymentRequestIndex(vec))
      {
-         BOOST_FOREACH(const CFund::CPaymentRequest& prequest, vec) {
-             if (prequest.fState != CFund::NIL)
+         BOOST_FOREACH(const CGovernance::CPaymentRequest& prequest, vec) {
+             if (prequest.fState != CGovernance::NIL)
                  continue;
              auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
                  [&prequest](const std::pair<std::string, bool>& element){ return element.first == prequest.hash.ToString();} );
@@ -3534,7 +3534,7 @@ UniValue paymentrequestvote(const UniValue& params, bool fHelp)
 
     if (strCommand == "yes")
     {
-      bool ret = CFund::VotePaymentRequest(strHash,true,duplicate);
+      bool ret = CGovernance::VotePaymentRequest(strHash,true,duplicate);
       if (duplicate) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("The payment request is already in the list: ")+strHash);
       } else if (ret) {
@@ -3543,7 +3543,7 @@ UniValue paymentrequestvote(const UniValue& params, bool fHelp)
     }
     else if (strCommand == "no")
     {
-      bool ret = CFund::VotePaymentRequest(strHash,false,duplicate);
+      bool ret = CGovernance::VotePaymentRequest(strHash,false,duplicate);
       if (duplicate) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("The payment request is already in the list: ")+strHash);
       } else if (ret) {
@@ -3552,7 +3552,7 @@ UniValue paymentrequestvote(const UniValue& params, bool fHelp)
     }
     else if(strCommand == "remove")
     {
-      bool ret = CFund::RemoveVotePaymentRequest(strHash);
+      bool ret = CGovernance::RemoveVotePaymentRequest(strHash);
       if (ret) {
         return NullUniValue;
       } else {

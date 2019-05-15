@@ -5,7 +5,7 @@
 #include <QDialog>
 #include <QTimer>
 
-#include "../consensus/cfund.h"
+#include "../consensus/governance.h"
 #include "wallet/wallet.h"
 
 /* Confirmation dialog for proposals and payment requests. Widgets are hidden according if proposal or payment request*/
@@ -19,8 +19,8 @@ class SendCommunityFundDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit SendCommunityFundDialog(QWidget *parent = 0, CFund::CProposal* proposal = 0, int secDelay = 5);
-    explicit SendCommunityFundDialog(QWidget *parent = 0, CFund::CPaymentRequest* prequest = 0, int secDelay = 5);
+    explicit SendCommunityFundDialog(QWidget *parent = 0, CGovernance::CProposal* proposal = 0, int secDelay = 5);
+    explicit SendCommunityFundDialog(QWidget *parent = 0, CGovernance::CPaymentRequest* prequest = 0, int secDelay = 5);
     int exec();
     ~SendCommunityFundDialog();
 
@@ -30,8 +30,8 @@ private Q_SLOTS:
 
 private:
     Ui::SendCommunityFundDialog *ui;
-    CFund::CProposal* proposal;
-    CFund::CPaymentRequest* prequest;
+    CGovernance::CProposal* proposal;
+    CGovernance::CPaymentRequest* prequest;
     QTimer countDownTimer;
     int secDelay;
     CWallet *wallet;

@@ -7,7 +7,7 @@
 #include <string>
 
 #include "base58.h"
-#include "consensus/cfund.h"
+#include "consensus/governance.h"
 #include "guiconstants.h"
 #include "guiutil.h"
 #include "main.cpp"
@@ -90,8 +90,8 @@ void CommunityFundCreatePaymentRequestDialog::click_pushButtonSubmitPaymentReque
         LOCK2(cs_main, pwalletMain->cs_wallet);
 
         // Get Proposal
-        CFund::CProposal proposal;
-        if(!CFund::FindProposal(ui->lineEditProposalHash->text().toStdString(), proposal)) {
+        CGovernance::CProposal proposal;
+        if(!CGovernance::FindProposal(ui->lineEditProposalHash->text().toStdString(), proposal)) {
             QMessageBox msgBox(this);
             std::string str = "Proposal could not be found with that hash\n";
             msgBox.setText(tr(str.c_str()));
@@ -101,7 +101,7 @@ void CommunityFundCreatePaymentRequestDialog::click_pushButtonSubmitPaymentReque
             msgBox.exec();
             return;
         }
-        if(proposal.fState != CFund::ACCEPTED) {
+        if(proposal.fState != CGovernance::ACCEPTED) {
             QMessageBox msgBox(this);
             std::string str = "Proposals need to have been accepted to create a Payment Request for them\n";
             msgBox.setText(tr(str.c_str()));
@@ -212,7 +212,7 @@ void CommunityFundCreatePaymentRequestDialog::click_pushButtonSubmitPaymentReque
         strDZeel.push_back(Pair("s",Signature));
         strDZeel.push_back(Pair("r",sRandom));
         strDZeel.push_back(Pair("i",id));
-        strDZeel.push_back(Pair("v",IsReducedCFundQuorumEnabled(chainActive.Tip(), Params().GetConsensus()) ? CFund::CPaymentRequest::CURRENT_VERSION : 2));
+        strDZeel.push_back(Pair("v",IsReducedCFundQuorumEnabled(chainActive.Tip(), Params().GetConsensus()) ? CGovernance::CPaymentRequest::CURRENT_VERSION : 2));
 
         wtx.strDZeel = strDZeel.write();
         wtx.nCustomVersion = CTransaction::PAYMENT_REQUEST_VERSION;
@@ -246,7 +246,7 @@ void CommunityFundCreatePaymentRequestDialog::click_pushButtonSubmitPaymentReque
         // Create partial proposal object with all nessesary display fields from input and create confirmation dialog
         {
             // Create confirmation dialog
-            CFund::CPaymentRequest* preq = new CFund::CPaymentRequest();
+            CGovernance::CPaymentRequest* preq = new CGovernance::CPaymentRequest();
             preq->nAmount = ui->lineEditRequestedAmount->value();
             preq->proposalhash = proposal.hash;
             preq->strDZeel = ui->plainTextEditDescription->toPlainText().toStdString();
@@ -261,7 +261,7 @@ void CommunityFundCreatePaymentRequestDialog::click_pushButtonSubmitPaymentReque
                 // Parse NavCoin address
                 CScript CFContributionScript;
                 CScript scriptPubKey = GetScriptForDestination(address.Get());
-                CFund::SetScriptForCommunityFundContribution(scriptPubKey);
+                CGovernance::SetScriptForCommunityFundContribution(scriptPubKey);
 
                 // Create and send the transaction
                 CReserveKey reservekey(pwalletMain);
@@ -327,10 +327,10 @@ void CommunityFundCreatePaymentRequestDialog::click_pushButtonSubmitPaymentReque
 
 bool CommunityFundCreatePaymentRequestDialog::isActiveProposal(uint256 hash)
 {
-    std::vector<CFund::CProposal> vec;
+    std::vector<CGovernance::CProposal> vec;
     if(pblocktree->GetProposalIndex(vec))
     {
-        if(std::find_if(vec.begin(), vec.end(), [&hash](CFund::CProposal& obj) {return obj.hash == hash;}) == vec.end())
+        if(std::find_if(vec.begin(), vec.end(), [&hash](CGovernance::CProposal& obj) {return obj.hash == hash;}) == vec.end())
         {
             return false;
         }

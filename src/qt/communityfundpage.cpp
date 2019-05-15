@@ -20,7 +20,7 @@ CommunityFundPage::CommunityFundPage(const PlatformStyle *platformStyle, QWidget
     ui(new Ui::CommunityFundPage),
     clientModel(0),
     walletModel(0),
-    flag(CFund::NIL),
+    flag(CGovernance::NIL),
     viewing_proposals(true),
     viewing_voted(false),
     viewing_unvoted(false)
@@ -55,7 +55,7 @@ CommunityFundPage::CommunityFundPage(const PlatformStyle *platformStyle, QWidget
 void CommunityFundPage::setWalletModel(WalletModel *model)
 {
     this->walletModel = model;
-    flag = CFund::NIL;
+    flag = CGovernance::NIL;
     viewing_voted = false;
     viewing_unvoted = true;
     refresh(false, true);
@@ -118,12 +118,12 @@ void CommunityFundPage::refresh(bool all, bool proposal)
 
     {
         int64_t spent_nav = 0;
-        std::vector<CFund::CPaymentRequest> vec;
+        std::vector<CGovernance::CPaymentRequest> vec;
         if(pblocktree->GetPaymentRequestIndex(vec))
         {
-            BOOST_FOREACH(const CFund::CPaymentRequest& prequest, vec)
+            BOOST_FOREACH(const CGovernance::CPaymentRequest& prequest, vec)
             {
-                if(prequest.fState == CFund::ACCEPTED)
+                if(prequest.fState == CGovernance::ACCEPTED)
                 {
                     spent_nav = spent_nav + prequest.nAmount;
                 }
@@ -137,10 +137,10 @@ void CommunityFundPage::refresh(bool all, bool proposal)
 
     // Propulate proposal grid
     if (proposal) {
-        std::vector<CFund::CProposal> vec;
+        std::vector<CGovernance::CProposal> vec;
         if(pblocktree->GetProposalIndex(vec))
         {
-            BOOST_FOREACH(const CFund::CProposal proposal, vec) {
+            BOOST_FOREACH(const CGovernance::CProposal proposal, vec) {
                 // If wanting to view all proposals
                 if (all) {
                     append(new CommunityFundDisplay(0, proposal));
@@ -149,7 +149,7 @@ void CommunityFundPage::refresh(bool all, bool proposal)
                     // If the filter is set to my vote, filter to only pending proposals which have been voted for
                     if (viewing_voted)
                     {
-                        if (proposal.fState == CFund::NIL && proposal.GetState(pindexBestHeader->GetBlockTime()).find("expired") == string::npos)
+                        if (proposal.fState == CGovernance::NIL && proposal.GetState(pindexBestHeader->GetBlockTime()).find("expired") == string::npos)
                         {
                             auto it = std::find_if( vAddedProposalVotes.begin(), vAddedProposalVotes.end(),
                                                     [&proposal](const std::pair<std::string, bool>& element){ return element.first == proposal.hash.ToString();} );
@@ -169,7 +169,7 @@ void CommunityFundPage::refresh(bool all, bool proposal)
                     // If the filter is set to no vote, filter to only pending proposals which have been not been voted for yet
                     else if (viewing_unvoted)
                     {
-                        if (proposal.fState == CFund::NIL && proposal.GetState(pindexBestHeader->GetBlockTime()).find("expired") == string::npos)
+                        if (proposal.fState == CGovernance::NIL && proposal.GetState(pindexBestHeader->GetBlockTime()).find("expired") == string::npos)
                         {
                             auto it = std::find_if( vAddedProposalVotes.begin(), vAddedProposalVotes.end(),
                                                     [&proposal](const std::pair<std::string, bool>& element){ return element.first == proposal.hash.ToString();} );
@@ -189,22 +189,22 @@ void CommunityFundPage::refresh(bool all, bool proposal)
                     else
                     {
                         // If the flag is expired, be sure to display proposals without the expired state if they have expired before the end of the voting cycle
-                        if (proposal.fState != CFund::EXPIRED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("expired") != string::npos && flag == CFund::EXPIRED)
+                        if (proposal.fState != CGovernance::EXPIRED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("expired") != string::npos && flag == CGovernance::EXPIRED)
                         {
                             append(new CommunityFundDisplay(0, proposal));
                         }
                         // If the proposal is accepted and waiting for funds or the end of the voting cycle, show in the accepted filter
-                        if (flag == CFund::ACCEPTED && proposal.fState != CFund::ACCEPTED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("accepted") != string::npos) {
+                        if (flag == CGovernance::ACCEPTED && proposal.fState != CGovernance::ACCEPTED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("accepted") != string::npos) {
                             append(new CommunityFundDisplay(0, proposal));
                         }
                         // If the proposal is rejected and waiting for funds or the end of the voting cycle, show in the rejected filter
-                        if (flag == CFund::REJECTED && proposal.fState != CFund::REJECTED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("rejected") != string::npos) {
+                        if (flag == CGovernance::REJECTED && proposal.fState != CGovernance::REJECTED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("rejected") != string::npos) {
                             append(new CommunityFundDisplay(0, proposal));
                         }
                         // Display proposals with the appropriate flag and have not expired before the voting cycle has ended
-                        if (proposal.fState != flag || ((flag != CFund::EXPIRED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("expired") != string::npos) ||
-                                                        (flag != CFund::ACCEPTED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("accepted") != string::npos) ||
-                                                         (flag != CFund::REJECTED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("rejected") != string::npos)))
+                        if (proposal.fState != flag || ((flag != CGovernance::EXPIRED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("expired") != string::npos) ||
+                                                        (flag != CGovernance::ACCEPTED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("accepted") != string::npos) ||
+                                                         (flag != CGovernance::REJECTED && proposal.GetState(pindexBestHeader->GetBlockTime()).find("rejected") != string::npos)))
                             continue;
                         append(new CommunityFundDisplay(0, proposal));
                     }
@@ -214,10 +214,10 @@ void CommunityFundPage::refresh(bool all, bool proposal)
     }
     else
     { //Payment request listings
-        std::vector<CFund::CPaymentRequest> vec;
+        std::vector<CGovernance::CPaymentRequest> vec;
         if(pblocktree->GetPaymentRequestIndex(vec))
         {
-            BOOST_FOREACH(const CFund::CPaymentRequest& prequest, vec) {
+            BOOST_FOREACH(const CGovernance::CPaymentRequest& prequest, vec) {
                 // If wanting to view all prequests
                 if (all)
                 {
@@ -228,7 +228,7 @@ void CommunityFundPage::refresh(bool all, bool proposal)
                     // If the filter is set to my vote, filter to only pending prequests which have been voted for
                     if (viewing_voted)
                     {
-                        if (prequest.fState == CFund::NIL && prequest.GetState().find("expired") == string::npos)
+                        if (prequest.fState == CGovernance::NIL && prequest.GetState().find("expired") == string::npos)
                         {
                             auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
                                                     [&prequest](const std::pair<std::string, bool>& element){ return element.first == prequest.hash.ToString();} );
@@ -248,7 +248,7 @@ void CommunityFundPage::refresh(bool all, bool proposal)
                     // If the filter is set to no vote, filter to only pending prequests which have not been voted for yet
                     else if (viewing_unvoted)
                     {
-                        if (prequest.fState == CFund::NIL && prequest.GetState().find("expired") == string::npos)
+                        if (prequest.fState == CGovernance::NIL && prequest.GetState().find("expired") == string::npos)
                         {
                             auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
                                                     [&prequest](const std::pair<std::string, bool>& element){ return element.first == prequest.hash.ToString();} );
@@ -268,22 +268,22 @@ void CommunityFundPage::refresh(bool all, bool proposal)
                     else
                     {
                         // If the flag is expired, be sure to display prequests without the expired state if they have expired before the end of the voting cycle
-                        if (prequest.fState != CFund::EXPIRED && prequest.GetState().find("expired") != string::npos && flag == CFund::EXPIRED)
+                        if (prequest.fState != CGovernance::EXPIRED && prequest.GetState().find("expired") != string::npos && flag == CGovernance::EXPIRED)
                         {
                             append(new CommunityFundDisplayPaymentRequest(0, prequest));
                         }
                         // If the prequest is accepted and waiting for funds or the end of the voting cycle, show in the accepted filter
-                        if (flag == CFund::ACCEPTED && prequest.fState != CFund::ACCEPTED && prequest.GetState().find("accepted") != string::npos) {
+                        if (flag == CGovernance::ACCEPTED && prequest.fState != CGovernance::ACCEPTED && prequest.GetState().find("accepted") != string::npos) {
                             append(new CommunityFundDisplayPaymentRequest(0, prequest));
                         }
                         // If the prequest is rejected and waiting for funds or the end of the voting cycle, show in the rejected filter
-                        if (flag == CFund::REJECTED && prequest.fState != CFund::REJECTED && prequest.GetState().find("rejected") != string::npos) {
+                        if (flag == CGovernance::REJECTED && prequest.fState != CGovernance::REJECTED && prequest.GetState().find("rejected") != string::npos) {
                             append(new CommunityFundDisplayPaymentRequest(0, prequest));
                         }
                         // Display prequests with the appropriate flag and have not expired before the voting cycle has ended
-                        if (prequest.fState != flag || ((flag != CFund::EXPIRED && prequest.GetState().find("expired") != string::npos) ||
-                                                        (flag != CFund::ACCEPTED && prequest.GetState().find("accepted") != string::npos) ||
-                                                        (flag != CFund::REJECTED && prequest.GetState().find("rejected") != string::npos)))
+                        if (prequest.fState != flag || ((flag != CGovernance::EXPIRED && prequest.GetState().find("expired") != string::npos) ||
+                                                        (flag != CGovernance::ACCEPTED && prequest.GetState().find("accepted") != string::npos) ||
+                                                        (flag != CGovernance::REJECTED && prequest.GetState().find("rejected") != string::npos)))
                             continue;
                         append(new CommunityFundDisplayPaymentRequest(0, prequest));
                     }
@@ -325,7 +325,7 @@ void CommunityFundPage::click_pushButtonPaymentRequests()
 
 void CommunityFundPage::click_radioButtonAll()
 {
-    flag = CFund::NIL;
+    flag = CGovernance::NIL;
     viewing_voted = false;
     viewing_unvoted = false;
     refresh(true, viewing_proposals);
@@ -333,7 +333,7 @@ void CommunityFundPage::click_radioButtonAll()
 
 void CommunityFundPage::click_radioButtonYourVote()
 {
-    flag = CFund::NIL;
+    flag = CGovernance::NIL;
     viewing_voted = true;
     viewing_unvoted = false;
     refresh(false, viewing_proposals);
@@ -341,7 +341,7 @@ void CommunityFundPage::click_radioButtonYourVote()
 
 void CommunityFundPage::click_radioButtonPending()
 {
-    flag = CFund::NIL;
+    flag = CGovernance::NIL;
     viewing_voted = false;
     viewing_unvoted = false;
     refresh(false, viewing_proposals);
@@ -349,7 +349,7 @@ void CommunityFundPage::click_radioButtonPending()
 
 void CommunityFundPage::click_radioButtonAccepted()
 {
-    flag = CFund::ACCEPTED;
+    flag = CGovernance::ACCEPTED;
     viewing_voted = false;
     viewing_unvoted = false;
     refresh(false, viewing_proposals);
@@ -357,7 +357,7 @@ void CommunityFundPage::click_radioButtonAccepted()
 
 void CommunityFundPage::click_radioButtonRejected()
 {
-    flag = CFund::REJECTED;
+    flag = CGovernance::REJECTED;
     viewing_voted = false;
     viewing_unvoted = false;
     refresh(false, viewing_proposals);
@@ -365,7 +365,7 @@ void CommunityFundPage::click_radioButtonRejected()
 
 void CommunityFundPage::click_radioButtonExpired()
 {
-    flag = CFund::EXPIRED;
+    flag = CGovernance::EXPIRED;
     viewing_voted = false;
     viewing_unvoted = false;
     refresh(false, viewing_proposals);
@@ -389,7 +389,7 @@ void CommunityFundPage::click_pushButtonCreatePaymentRequest()
 
 void CommunityFundPage::click_radioButtonNoVote()
 {
-    flag = CFund::NIL;
+    flag = CGovernance::NIL;
     viewing_voted = false;
     viewing_unvoted = true;
     refresh(false, viewing_proposals);
