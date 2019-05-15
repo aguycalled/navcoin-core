@@ -28,15 +28,15 @@ CommunityFundDisplayDetailed::CommunityFundDisplayDetailed(QWidget *parent, CGov
     if (proposal.fState == CGovernance::NIL && proposal.GetState(pindexBestHeader->GetBlockTime()).find("expired") == string::npos) {
         // Get proposal votes list
         auto it = std::find_if( vAddedProposalVotes.begin(), vAddedProposalVotes.end(),
-                                [&proposal](const std::pair<std::string, bool>& element){ return element.first == proposal.hash.ToString();} );
+                                [&proposal](const std::pair<std::string, int>& element){ return element.first == proposal.hash.ToString();} );
         if (it != vAddedProposalVotes.end()) {
-            if (it->second) {
+            if (it->second == 1) {
                 // Proposal was voted yes, shade in yes button and unshade no button
                 ui->buttonBoxYesNoVote->setStandardButtons(QDialogButtonBox::No|QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
                 ui->buttonBoxYesNoVote->button(QDialogButtonBox::Yes)->setStyleSheet(COLOR_VOTE_YES);
                 ui->buttonBoxYesNoVote->button(QDialogButtonBox::No)->setStyleSheet(COLOR_VOTE_NEUTRAL);
             }
-            else {
+            else if (it->second == 0) {
                 // Proposal was noted no, shade in no button and unshade yes button
                 ui->buttonBoxYesNoVote->setStandardButtons(QDialogButtonBox::No|QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
                 ui->buttonBoxYesNoVote->button(QDialogButtonBox::Yes)->setStyleSheet(COLOR_VOTE_NEUTRAL);

@@ -26,15 +26,15 @@ CommunityFundDisplayPaymentRequestDetailed::CommunityFundDisplayPaymentRequestDe
     if (prequest.fState == CGovernance::NIL && prequest.GetState().find("expired") == string::npos) {
         // Get prequest votes list
         auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
-                                [&prequest](const std::pair<std::string, bool>& element){ return element.first == prequest.hash.ToString();} );
+                                [&prequest](const std::pair<std::string, int>& element){ return element.first == prequest.hash.ToString();} );
         if (it != vAddedPaymentRequestVotes.end()) {
-            if (it->second) {
+            if (it->second == 1) {
                 // Payment Request was voted yes, shade in yes button and unshade no button
                 ui->buttonBoxYesNoVote_2->setStandardButtons(QDialogButtonBox::No|QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
                 ui->buttonBoxYesNoVote_2->button(QDialogButtonBox::Yes)->setStyleSheet(COLOR_VOTE_YES);
                 ui->buttonBoxYesNoVote_2->button(QDialogButtonBox::No)->setStyleSheet(COLOR_VOTE_NEUTRAL);
             }
-            else {
+            else if (it->second == 0){
                 // Payment Request was noted no, shade in no button and unshade yes button
                 ui->buttonBoxYesNoVote_2->setStandardButtons(QDialogButtonBox::No|QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
                 ui->buttonBoxYesNoVote_2->button(QDialogButtonBox::Yes)->setStyleSheet(COLOR_VOTE_NEUTRAL);

@@ -130,17 +130,17 @@ void CommunityFundDisplay::refresh()
         // Get proposal votes list
         CGovernance::CProposal prop = this->proposal;
         auto it = std::find_if( vAddedProposalVotes.begin(), vAddedProposalVotes.end(),
-                                [&prop](const std::pair<std::string, bool>& element){ return element.first == prop.hash.ToString();} );
+                                [&prop](const std::pair<std::string, int>& element){ return element.first == prop.hash.ToString();} );
         if (it != vAddedProposalVotes.end())
         {
-            if (it->second)
+            if (it->second == 1)
             {
                 // Proposal was voted yes, shade in yes button and unshade no button
                 ui->buttonBoxVote->setStandardButtons(QDialogButtonBox::No|QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
                 ui->buttonBoxVote->button(QDialogButtonBox::Yes)->setStyleSheet(COLOR_VOTE_YES);
                 ui->buttonBoxVote->button(QDialogButtonBox::No)->setStyleSheet(COLOR_VOTE_NEUTRAL);
             }
-            else
+            else if (it->second == 0)
             {
                 // Proposal was noted no, shade in no button and unshade yes button
                 ui->buttonBoxVote->setStandardButtons(QDialogButtonBox::No|QDialogButtonBox::Yes|QDialogButtonBox::Cancel);

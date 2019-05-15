@@ -3367,9 +3367,10 @@ UniValue proposalvotelist(const UniValue& params, bool fHelp)
 
                 "\nResult:\n"
                 "{\n"
-                "      \"yes\":   List of proposals this wallet is casting a 'yes' vote for.\n"
-                "      \"no\":    List of proposals this wallet is casting a 'no' vote for.\n"
-                "      \"null\":  List of proposals this wallet has NOT yet cast a vote for.\n"
+                "      \"yes\":     List of proposals this wallet is casting a 'yes' vote for.\n"
+                "      \"no\":      List of proposals this wallet is casting a 'no' vote for.\n"
+                "      \"abstain\": List of proposals this wallet is casting an 'abstain' vote for.\n"
+                "      \"null\":    List of proposals this wallet has NOT yet cast a vote for.\n"
                 "}\n"
         );
 
@@ -3378,6 +3379,7 @@ UniValue proposalvotelist(const UniValue& params, bool fHelp)
     UniValue ret(UniValue::VOBJ);
     UniValue yesvotes(UniValue::VARR);
     UniValue novotes(UniValue::VARR);
+    UniValue abstainvotes(UniValue::VARR);
     UniValue nullvotes(UniValue::VARR);
 
     std::vector<CGovernance::CProposal> vec;
@@ -3387,12 +3389,14 @@ UniValue proposalvotelist(const UniValue& params, bool fHelp)
              if (proposal.fState != CGovernance::NIL)
                  continue;
              auto it = std::find_if( vAddedProposalVotes.begin(), vAddedProposalVotes.end(),
-                 [&proposal](const std::pair<std::string, bool>& element){ return element.first == proposal.hash.ToString();} );
+                 [&proposal](const std::pair<std::string, int>& element){ return element.first == proposal.hash.ToString();} );
              UniValue p(UniValue::VOBJ);
              proposal.ToJson(p, *pcoinsTip);
              if (it != vAddedProposalVotes.end()) {
-                 if (it->second)
+                 if (it->second == 1)
                      yesvotes.push_back(p);
+                 else if (it->second == 2)
+                     abstainvotes.push_back(p);
                  else
                      novotes.push_back(p);
              } else {
@@ -3403,6 +3407,7 @@ UniValue proposalvotelist(const UniValue& params, bool fHelp)
 
     ret.push_back(Pair("yes",yesvotes));
     ret.push_back(Pair("no",novotes));
+    ret.push_back(Pair("abstain",abstainvotes));
     ret.push_back(Pair("null",nullvotes));
 
     return ret;
@@ -3415,13 +3420,14 @@ UniValue proposalvote(const UniValue& params, bool fHelp)
     if (params.size() >= 2)
         strCommand = params[1].get_str();
     if (fHelp || params.size() > 3 ||
-        (strCommand != "yes" && strCommand != "no" && strCommand != "remove"))
+        (strCommand != "yes" && strCommand != "no" && strCommand != "abstain" && strCommand != "remove"))
         throw runtime_error(
-            "proposalvote \"proposal_hash\" \"yes|no|remove\"\n"
+            "proposalvote \"proposal_hash\" \"yes|no|abstain|remove\"\n"
             "\nAdds a proposal to the list of votes.\n"
             "\nArguments:\n"
             "1. \"proposal_hash\" (string, required) The proposal hash\n"
             "2. \"command\"       (string, required) 'yes' to vote yes, 'no' to vote no,\n"
+            "                      'abstain' to cast your decision not to vote,\n"
             "                      'remove' to remove a proposal from the list\n"
         );
 
@@ -3432,7 +3438,7 @@ UniValue proposalvote(const UniValue& params, bool fHelp)
 
     if (strCommand == "yes")
     {
-      bool ret = CGovernance::VoteProposal(strHash,true,duplicate);
+      bool ret = CGovernance::VoteProposal(strHash,1,duplicate);
       if (duplicate) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("The proposal is already in the list: ")+strHash);
       } else if (ret) {
@@ -3441,7 +3447,16 @@ UniValue proposalvote(const UniValue& params, bool fHelp)
     }
     else if (strCommand == "no")
     {
-      bool ret = CGovernance::VoteProposal(strHash,false,duplicate);
+      bool ret = CGovernance::VoteProposal(strHash,0,duplicate);
+      if (duplicate) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("The proposal is already in the list: ")+strHash);
+      } else if (ret) {
+        return NullUniValue;
+      }
+    }
+    else if (strCommand == "abstain")
+    {
+      bool ret = CGovernance::VoteProposal(strHash,2,duplicate);
       if (duplicate) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("The proposal is already in the list: ")+strHash);
       } else if (ret) {
@@ -3471,15 +3486,17 @@ UniValue paymentrequestvotelist(const UniValue& params, bool fHelp)
 
                 "\nResult:\n"
                 "{\n"
-                "      \"yes\":   List of proposals this wallet is casting a 'yes' vote for.\n"
-                "      \"no\":    List of proposals this wallet is casting a 'no' vote for.\n"
-                "      \"null\":  List of proposals this wallet has NOT yet cast a vote for.\n"
+                "      \"yes\":     List of proposals this wallet is casting a 'yes' vote for.\n"
+                "      \"no\":      List of proposals this wallet is casting a 'no' vote for.\n"
+                "      \"abstain\": List of proposals this wallet is casting an 'abstain' vote for.\n"
+                "      \"null\":    List of proposals this wallet has NOT yet cast a vote for.\n"
                 "}\n"
         );
 
     UniValue ret(UniValue::VOBJ);
     UniValue yesvotes(UniValue::VARR);
     UniValue novotes(UniValue::VARR);
+    UniValue abstainvotes(UniValue::VARR);
     UniValue nullvotes(UniValue::VARR);
 
     std::vector<CGovernance::CPaymentRequest> vec;
@@ -3489,14 +3506,16 @@ UniValue paymentrequestvotelist(const UniValue& params, bool fHelp)
              if (prequest.fState != CGovernance::NIL)
                  continue;
              auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
-                 [&prequest](const std::pair<std::string, bool>& element){ return element.first == prequest.hash.ToString();} );
+                 [&prequest](const std::pair<std::string, int>& element){ return element.first == prequest.hash.ToString();} );
              UniValue p(UniValue::VOBJ);
              prequest.ToJson(p);
              if (it != vAddedPaymentRequestVotes.end()) {
-                 if (it->second)
+                 if (it->second == 1)
                      yesvotes.push_back(p);
-                 else
+                 else if (it->second == 0)
                      novotes.push_back(p);
+                 else
+                     abstainvotes.push_back(p);
              } else {
                  nullvotes.push_back(p);
              }
@@ -3505,6 +3524,7 @@ UniValue paymentrequestvotelist(const UniValue& params, bool fHelp)
 
     ret.push_back(Pair("yes",yesvotes));
     ret.push_back(Pair("no",novotes));
+    ret.push_back(Pair("abstain",abstainvotes));
     ret.push_back(Pair("null",nullvotes));
 
     return ret;
@@ -3517,13 +3537,14 @@ UniValue paymentrequestvote(const UniValue& params, bool fHelp)
     if (params.size() >= 2)
         strCommand = params[1].get_str();
     if (fHelp || params.size() > 3 ||
-        (strCommand != "yes" && strCommand != "no" && strCommand != "remove"))
+        (strCommand != "yes" && strCommand != "no" && strCommand != "abstain" && strCommand != "remove"))
         throw runtime_error(
-            "paymentrequestvote \"request_hash\" \"yes|no|remove\"\n"
+            "paymentrequestvote \"request_hash\" \"yes|no|abstain|remove\"\n"
             "\nAdds/removes a proposal to the list of votes.\n"
             "\nArguments:\n"
             "1. \"request_hash\" (string, required) The payment request hash\n"
             "2. \"command\"       (string, required) 'yes' to vote yes, 'no' to vote no,\n"
+            "                      'abstain' to cast your decision not to vote,\n"
             "                      'remove' to remove a proposal from the list\n"
         );
 
@@ -3534,7 +3555,7 @@ UniValue paymentrequestvote(const UniValue& params, bool fHelp)
 
     if (strCommand == "yes")
     {
-      bool ret = CGovernance::VotePaymentRequest(strHash,true,duplicate);
+      bool ret = CGovernance::VotePaymentRequest(strHash,1,duplicate);
       if (duplicate) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("The payment request is already in the list: ")+strHash);
       } else if (ret) {
@@ -3543,7 +3564,16 @@ UniValue paymentrequestvote(const UniValue& params, bool fHelp)
     }
     else if (strCommand == "no")
     {
-      bool ret = CGovernance::VotePaymentRequest(strHash,false,duplicate);
+      bool ret = CGovernance::VotePaymentRequest(strHash,0,duplicate);
+      if (duplicate) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("The payment request is already in the list: ")+strHash);
+      } else if (ret) {
+        return NullUniValue;
+      }
+    }
+    else if (strCommand == "abstain")
+    {
+      bool ret = CGovernance::VotePaymentRequest(strHash,2,duplicate);
       if (duplicate) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("The payment request is already in the list: ")+strHash);
       } else if (ret) {

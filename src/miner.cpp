@@ -208,11 +208,11 @@ CBlockTemplate* BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bo
     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
     if(IsCommunityFundEnabled(pindexPrev, chainparams.GetConsensus()))
     {
-        std::map<uint256, bool> votes;
+        std::map<uint256, int> votes;
         for (unsigned int i = 0; i < vAddedProposalVotes.size(); i++)
         {
             CGovernance::CProposal proposal;
-            bool vote = vAddedProposalVotes[i].second;
+            int vote = vAddedProposalVotes[i].second;
             if(CGovernance::FindProposal(vAddedProposalVotes[i].first, proposal))
             {
                 if(proposal.CanVote() && votes.count(proposal.hash) == 0)
@@ -229,7 +229,7 @@ CBlockTemplate* BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bo
         for (unsigned int i = 0; i < vAddedPaymentRequestVotes.size(); i++)
         {
             CGovernance::CPaymentRequest prequest; CGovernance::CProposal proposal;
-            bool vote = vAddedPaymentRequestVotes[i].second;
+            int vote = vAddedPaymentRequestVotes[i].second;
             if(CGovernance::FindPaymentRequest(vAddedPaymentRequestVotes[i].first, prequest))
             {
                 if(!CGovernance::FindProposal(prequest.proposalhash, proposal))

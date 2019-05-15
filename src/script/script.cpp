@@ -261,7 +261,7 @@ bool CScript::IsCommunityFundContribution() const
 
 bool CScript::IsProposalVote() const
 {
-    return IsProposalVoteYes() || IsProposalVoteNo();
+    return IsProposalVoteYes() || IsProposalVoteNo() || IsProposalVoteAbstain();
 }
 
 bool CScript::IsProposalVoteYes() const
@@ -284,9 +284,19 @@ bool CScript::IsProposalVoteNo() const
       (*this)[4] == 0x20);
 }
 
+bool CScript::IsProposalVoteAbstain() const
+{
+    return (this->size() == 37 &&
+      (*this)[0] == OP_RETURN &&
+      (*this)[1] == OP_GOVERNANCE &&
+      (*this)[2] == OP_PROP &&
+      (*this)[3] == OP_ABSTAIN &&
+      (*this)[4] == 0x20);
+}
+
 bool CScript::IsPaymentRequestVote() const
 {
-    return IsPaymentRequestVoteYes() || IsPaymentRequestVoteNo();
+    return IsPaymentRequestVoteYes() || IsPaymentRequestVoteNo() || IsPaymentRequestVoteAbstain();
 }
 
 bool CScript::IsPaymentRequestVoteYes() const
@@ -309,6 +319,16 @@ bool CScript::IsPaymentRequestVoteNo() const
       (*this)[4] == 0x20);
 }
 
+bool CScript::IsPaymentRequestVoteAbstain() const
+{
+    return (this->size() == 37 &&
+      (*this)[0] == OP_RETURN &&
+      (*this)[1] == OP_GOVERNANCE &&
+      (*this)[2] == OP_PREQ &&
+      (*this)[3] == OP_ABSTAIN &&
+      (*this)[4] == 0x20);
+}
+
 bool CScript::IsPool() const
 {
     return (this->size() == 2 &&
@@ -316,7 +336,7 @@ bool CScript::IsPool() const
       (*this)[1] == OP_POOL);
 }
 
-bool CScript::ExtractVote(uint256 &hash, bool &vote) const
+bool CScript::ExtractVote(uint256 &hash, int &vote) const
 {
     if(!IsPaymentRequestVoteNo() && !IsPaymentRequestVoteYes() && !IsProposalVoteYes()
             && !IsProposalVoteNo())

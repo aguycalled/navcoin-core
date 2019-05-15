@@ -3033,7 +3033,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
         if((tx.IsCoinBase() && IsCommunityFundEnabled(pindex->pprev, chainparams.GetConsensus()))) {
             for (size_t j = 0; j < tx.vout.size(); j++) {
-                std::map<uint256, bool> votes; uint256 hash; bool vote;
+                std::map<uint256, int> votes; uint256 hash; int vote;
                 if(tx.vout[j].IsVote())
                     tx.vout[j].scriptPubKey.ExtractVote(hash, vote);
                 if(tx.vout[j].IsProposalVote()) {
@@ -3740,8 +3740,8 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
     std::vector<CGovernance::CProposal> vecProposal;
     std::vector<std::pair<uint256, CGovernance::CProposal>> vecProposalsToUpdate;
     std::vector<std::pair<uint256, CGovernance::CPaymentRequest>> vecPaymentRequestsToUpdate;
-    std::map<uint256, std::pair<int, int>> vCacheProposalsToUpdate;
-    std::map<uint256, std::pair<int, int>> vCachePaymentRequestToUpdate;
+    std::map<uint256, std::pair<int, std::pair<int, int>>> vCacheProposalsToUpdate;
+    std::map<uint256, std::pair<int, std::pair<int, int>>> vCachePaymentRequestToUpdate;
     CGovernance::CProposal proposal; CGovernance::CPaymentRequest prequest;
     std::map<uint256, bool> vSeen;
 
@@ -3788,11 +3788,13 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
             continue;
         if(vSeen.count(pindexDelete->vProposalVotes[i].first) == 0) {
             if(vCacheProposalsToUpdate.count(pindexDelete->vProposalVotes[i].first) == 0)
-                vCacheProposalsToUpdate[pindexDelete->vProposalVotes[i].first] = make_pair(proposal.nVotesYes, proposal.nVotesNo);
-            if(pindexDelete->vProposalVotes[i].second)
+                vCacheProposalsToUpdate[pindexDelete->vProposalVotes[i].first] = make_pair(proposal.nVotesYes, make_pair(proposal.nVotesNo, proposal.nVotesAbstain));
+            if(pindexDelete->vProposalVotes[i].second == 1)
                 vCacheProposalsToUpdate[pindexDelete->vProposalVotes[i].first].first -= 1;
+            else if(pindexDelete->vProposalVotes[i].second == 0)
+                vCacheProposalsToUpdate[pindexDelete->vProposalVotes[i].first].second.first -= 1;
             else
-                vCacheProposalsToUpdate[pindexDelete->vProposalVotes[i].first].second -= 1;
+                vCacheProposalsToUpdate[pindexDelete->vProposalVotes[i].first].second.second -= 1;
             vSeen[pindexDelete->vProposalVotes[i].first]=true;
         }
     }
@@ -3811,33 +3813,37 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
             continue;
         if(vSeen.count(pindexDelete->vPaymentRequestVotes[i].first) == 0) {
             if(vCachePaymentRequestToUpdate.count(pindexDelete->vPaymentRequestVotes[i].first) == 0)
-                vCachePaymentRequestToUpdate[pindexDelete->vPaymentRequestVotes[i].first] = make_pair(prequest.nVotesYes, prequest.nVotesNo);
-            if(pindexDelete->vPaymentRequestVotes[i].second)
+                vCachePaymentRequestToUpdate[pindexDelete->vPaymentRequestVotes[i].first] = make_pair(prequest.nVotesYes, make_pair(prequest.nVotesNo, prequest.nVotesAbstain));
+            if(pindexDelete->vPaymentRequestVotes[i].second == 1)
                 vCachePaymentRequestToUpdate[pindexDelete->vPaymentRequestVotes[i].first].first -= 1;
+            else if(pindexDelete->vPaymentRequestVotes[i].second == 0)
+                vCachePaymentRequestToUpdate[pindexDelete->vPaymentRequestVotes[i].first].second.first -= 1;
             else
-                vCachePaymentRequestToUpdate[pindexDelete->vPaymentRequestVotes[i].first].second -= 1;
+                vCachePaymentRequestToUpdate[pindexDelete->vPaymentRequestVotes[i].first].second.second -= 1;
             vSeen[pindexDelete->vPaymentRequestVotes[i].first]=true;
         }
     }
 
-    std::map<uint256, std::pair<int, int>>::iterator it;
+    std::map<uint256, std::pair<int, std::pair<int, int>>>::iterator it;
 
     for(it = vCacheProposalsToUpdate.begin(); it != vCacheProposalsToUpdate.end(); it++) {
         if(!CGovernance::FindProposal(it->first, proposal))
             continue;
-        if((it->second.first < 0 || it->second.second < 0) && (pindexDelete->nHeight % Params().GetConsensus().nBlocksPerVotingCycle != 0))
+        if((it->second.first < 0 || it->second.second.second < 0 || it->second.second.first < 0) && (pindexDelete->nHeight % Params().GetConsensus().nBlocksPerVotingCycle != 0))
             AbortNode(state,"Negative amount of votes when disconnecting tip, possible corrupted DB");
         proposal.nVotesYes = std::max(it->second.first, 0);
-        proposal.nVotesNo = std::max(it->second.second, 0);
+        proposal.nVotesNo = std::max(it->second.second.first, 0);
+        proposal.nVotesAbstain = std::max(it->second.second.second, 0);
         vecProposalsToUpdate.push_back(make_pair(proposal.hash, proposal));
     }
     for(it = vCachePaymentRequestToUpdate.begin(); it != vCachePaymentRequestToUpdate.end(); it++) {
         if(!CGovernance::FindPaymentRequest(it->first, prequest))
             continue;
-        if((it->second.first < 0 || it->second.second < 0) && (pindexDelete->nHeight % Params().GetConsensus().nBlocksPerVotingCycle != 0))
+        if((it->second.first < 0 || it->second.second.second < 0 || it->second.second.first < 0) && (pindexDelete->nHeight % Params().GetConsensus().nBlocksPerVotingCycle != 0))
             AbortNode(state,"Negative amount of votes when disconnecting tip, possible corrupted DB");
         prequest.nVotesYes = std::max(it->second.first, 0);
-        prequest.nVotesNo = std::max(it->second.second, 0);
+        prequest.nVotesNo = std::max(it->second.second.first, 0);
+        prequest.nVotesAbstain = std::max(it->second.second.second, 0);
         vecPaymentRequestsToUpdate.push_back(make_pair(prequest.hash, prequest));
     }
 

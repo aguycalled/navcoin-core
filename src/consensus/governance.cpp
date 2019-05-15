@@ -12,27 +12,38 @@ void CGovernance::SetScriptForCommunityFundContribution(CScript &script)
 {
     script.resize(2);
     script[0] = OP_RETURN;
-    script[1] = OP_CFUND;
+    script[1] = OP_GOVERNANCE;
 }
 
-void CGovernance::SetScriptForProposalVote(CScript &script, uint256 proposalhash, bool vote)
+void CGovernance::SetScriptForProposalVote(CScript &script, uint256 proposalhash, int vote)
 {
     script.resize(37);
     script[0] = OP_RETURN;
-    script[1] = OP_CFUND;
-    script[2] = OP_PROP;
-    script[3] = vote ? OP_YES : OP_NO;
+    script[1] = OP_GOVERNANCE;
+    script[2] = OP_CONSULTATION;
+    script[3] = vote == 0 ? OP_NO : (vote == 1 ? OP_YES : OP_ABSTAIN);
     script[4] = 0x20;
     memcpy(&script[5], proposalhash.begin(), 32);
 }
 
-void CGovernance::SetScriptForPaymentRequestVote(CScript &script, uint256 prequesthash, bool vote)
+void CGovernance::SetScriptForConsultationApprovalVote(CScript &script, uint256 consultationhash, int vote)
 {
     script.resize(37);
     script[0] = OP_RETURN;
-    script[1] = OP_CFUND;
+    script[1] = OP_GOVERNANCE;
+    script[2] = OP_CONSULTATION;
+    script[3] = vote == 0 ? OP_NO : (vote == 1 ? OP_YES : OP_ABSTAIN);
+    script[4] = 0x20;
+    memcpy(&script[5], consultationhash.begin(), 32);
+}
+
+void CGovernance::SetScriptForPaymentRequestVote(CScript &script, uint256 prequesthash, int vote)
+{
+    script.resize(37);
+    script[0] = OP_RETURN;
+    script[1] = OP_GOVERNANCE;
     script[2] = OP_PREQ;
-    script[3] = vote ? OP_YES : OP_NO;
+    script[3] = vote == 0 ? OP_NO : (vote == 1 ? OP_YES : OP_ABSTAIN);
     script[4] = 0x20;
     memcpy(&script[5], prequesthash.begin(), 32);
 }
@@ -77,7 +88,7 @@ bool CGovernance::FindPaymentRequest(string preqstr, CGovernance::CPaymentReques
 
 }
 
-bool CGovernance::VoteProposal(string strProp, bool vote, bool &duplicate)
+bool CGovernance::VoteProposal(string strProp, int vote, bool &duplicate)
 {
     AssertLockHeld(cs_main);
 
@@ -87,7 +98,7 @@ bool CGovernance::VoteProposal(string strProp, bool vote, bool &duplicate)
     if(!found || proposal.IsNull() || !proposal.CanVote())
         return false;
 
-    vector<std::pair<std::string, bool>>::iterator it = vAddedProposalVotes.begin();
+    vector<std::pair<std::string, int>>::iterator it = vAddedProposalVotes.begin();
     for(; it != vAddedProposalVotes.end(); it++)
         if (strProp == (*it).first) {
             if (vote == (*it).second)
@@ -96,7 +107,8 @@ bool CGovernance::VoteProposal(string strProp, bool vote, bool &duplicate)
         }
     RemoveConfigFile("addproposalvoteyes", strProp);
     RemoveConfigFile("addproposalvoteno", strProp);
-    WriteConfigFile(vote ? "addproposalvoteyes" : "addproposalvoteno", strProp);
+    RemoveConfigFile("addproposalvoteabstain", strProp);
+    WriteConfigFile(vote == 0 ? "addproposalvoteno" : (vote == 1 ? "addproposalvoteyes" : "addproposalvoteabstain"), strProp);
     if (it == vAddedProposalVotes.end()) {
         vAddedProposalVotes.push_back(make_pair(strProp, vote));
     } else {
@@ -106,20 +118,21 @@ bool CGovernance::VoteProposal(string strProp, bool vote, bool &duplicate)
     return true;
 }
 
-bool CGovernance::VoteProposal(uint256 proposalHash, bool vote, bool &duplicate)
+bool CGovernance::VoteProposal(uint256 proposalHash, int vote, bool &duplicate)
 {
     return VoteProposal(proposalHash.ToString(), vote, duplicate);
 }
 
 bool CGovernance::RemoveVoteProposal(string strProp)
 {
-    vector<std::pair<std::string, bool>>::iterator it = vAddedProposalVotes.begin();
+    vector<std::pair<std::string, int>>::iterator it = vAddedProposalVotes.begin();
     for(; it != vAddedProposalVotes.end(); it++)
         if (strProp == (*it).first)
             break;
 
     RemoveConfigFile("addproposalvoteyes", strProp);
     RemoveConfigFile("addproposalvoteno", strProp);
+    RemoveConfigFile("addproposalvoteabstain", strProp);
     if (it != vAddedProposalVotes.end())
         vAddedProposalVotes.erase(it);
     else
@@ -132,7 +145,7 @@ bool CGovernance::RemoveVoteProposal(uint256 proposalHash)
     return RemoveVoteProposal(proposalHash.ToString());
 }
 
-bool CGovernance::VotePaymentRequest(string strProp, bool vote, bool &duplicate)
+bool CGovernance::VotePaymentRequest(string strProp, int vote, bool &duplicate)
 {
     AssertLockHeld(cs_main);
 
@@ -142,7 +155,7 @@ bool CGovernance::VotePaymentRequest(string strProp, bool vote, bool &duplicate)
     if(!found || prequest.IsNull() || !prequest.CanVote(*pcoinsTip))
         return false;
 
-    vector<std::pair<std::string, bool>>::iterator it = vAddedPaymentRequestVotes.begin();
+    vector<std::pair<std::string, int>>::iterator it = vAddedPaymentRequestVotes.begin();
     for(; it != vAddedPaymentRequestVotes.end(); it++)
         if (strProp == (*it).first) {
             if (vote == (*it).second)
@@ -151,6 +164,7 @@ bool CGovernance::VotePaymentRequest(string strProp, bool vote, bool &duplicate)
         }
     RemoveConfigFile("addpaymentrequestvoteyes", strProp);
     RemoveConfigFile("addpaymentrequestvoteno", strProp);
+    RemoveConfigFile("addpaymentrequestvoteabstain", strProp);
     WriteConfigFile(vote ? "addpaymentrequestvoteyes" : "addpaymentrequestvoteno", strProp);
     if (it == vAddedPaymentRequestVotes.end()) {
         vAddedPaymentRequestVotes.push_back(make_pair(strProp, vote));
@@ -163,20 +177,21 @@ bool CGovernance::VotePaymentRequest(string strProp, bool vote, bool &duplicate)
 
 }
 
-bool CGovernance::VotePaymentRequest(uint256 proposalHash, bool vote, bool &duplicate)
+bool CGovernance::VotePaymentRequest(uint256 proposalHash, int vote, bool &duplicate)
 {
     return VotePaymentRequest(proposalHash.ToString(), vote, duplicate);
 }
 
 bool CGovernance::RemoveVotePaymentRequest(string strProp)
 {
-    vector<std::pair<std::string, bool>>::iterator it = vAddedPaymentRequestVotes.begin();
+    vector<std::pair<std::string, int>>::iterator it = vAddedPaymentRequestVotes.begin();
     for(; it != vAddedPaymentRequestVotes.end(); it++)
         if (strProp == (*it).first)
             break;
 
     RemoveConfigFile("addpaymentrequestvoteyes", strProp);
     RemoveConfigFile("addpaymentrequestvoteno", strProp);
+    RemoveConfigFile("addpaymentrequestvoteabstain", strProp);
     if (it != vAddedPaymentRequestVotes.end())
         vAddedPaymentRequestVotes.erase(it);
     else
@@ -360,9 +375,13 @@ bool CGovernance::IsValidProposal(CTransaction tx, int nMaxVersion)
 bool CGovernance::CPaymentRequest::IsAccepted() const {
     int nTotalVotes = nVotesYes + nVotesNo;
     float nMinimumQuorum = Params().GetConsensus().nMinimumQuorum;
-    if (nVersion >= 3) {
+
+    if (nVersion >= 3)
         nMinimumQuorum = nVotingCycle > Params().GetConsensus().nCyclesPaymentRequestVoting / 2 ? Params().GetConsensus().nMinimumQuorumSecondHalf : Params().GetConsensus().nMinimumQuorumFirstHalf;
-    }
+
+    if (nVersion >= 4)
+        nTotalVotes += nVotesAbstain;
+
     return nTotalVotes > Params().GetConsensus().nBlocksPerVotingCycle * nMinimumQuorum
            && ((float)nVotesYes > ((float)(nTotalVotes) * Params().GetConsensus().nVotesAcceptPaymentRequest));
 }
@@ -370,9 +389,13 @@ bool CGovernance::CPaymentRequest::IsAccepted() const {
 bool CGovernance::CPaymentRequest::IsRejected() const {
     int nTotalVotes = nVotesYes + nVotesNo;
     float nMinimumQuorum = Params().GetConsensus().nMinimumQuorum;
-    if (nVersion >= 3) {
+
+    if (nVersion >= 3)
         nMinimumQuorum = nVotingCycle > Params().GetConsensus().nCyclesPaymentRequestVoting / 2 ? Params().GetConsensus().nMinimumQuorumSecondHalf : Params().GetConsensus().nMinimumQuorumFirstHalf;
-    }
+
+    if (nVersion >= 4)
+        nTotalVotes += nVotesAbstain;
+
     return nTotalVotes > Params().GetConsensus().nBlocksPerVotingCycle * nMinimumQuorum
            && ((float)nVotesNo > ((float)(nTotalVotes) * Params().GetConsensus().nVotesRejectPaymentRequest));
 }
@@ -384,9 +407,13 @@ bool CGovernance::CPaymentRequest::ExceededMaxVotingCycles() const {
 bool CGovernance::CProposal::IsAccepted() const {
     int nTotalVotes = nVotesYes + nVotesNo;
     float nMinimumQuorum = Params().GetConsensus().nMinimumQuorum;
-    if (nVersion >= 3) {
+
+    if (nVersion >= 3)
         nMinimumQuorum = nVotingCycle > Params().GetConsensus().nCyclesProposalVoting / 2 ? Params().GetConsensus().nMinimumQuorumSecondHalf : Params().GetConsensus().nMinimumQuorumFirstHalf;
-    }
+
+    if (nVersion >= 4)
+        nTotalVotes += nVotesAbstain;
+
     return nTotalVotes > Params().GetConsensus().nBlocksPerVotingCycle * nMinimumQuorum
            && ((float)nVotesYes > ((float)(nTotalVotes) * Params().GetConsensus().nVotesAcceptProposal));
 }
@@ -394,9 +421,13 @@ bool CGovernance::CProposal::IsAccepted() const {
 bool CGovernance::CProposal::IsRejected() const {
     int nTotalVotes = nVotesYes + nVotesNo;
     float nMinimumQuorum = Params().GetConsensus().nMinimumQuorum;
-    if (nVersion >= 3) {
+
+    if (nVersion >= 3)
         nMinimumQuorum = nVotingCycle > Params().GetConsensus().nCyclesProposalVoting / 2 ? Params().GetConsensus().nMinimumQuorumSecondHalf : Params().GetConsensus().nMinimumQuorumFirstHalf;
-    }
+
+    if (nVersion >= 4)
+        nTotalVotes += nVotesAbstain;
+
     return nTotalVotes > Params().GetConsensus().nBlocksPerVotingCycle * nMinimumQuorum
            && ((float)nVotesNo > ((float)(nTotalVotes) * Params().GetConsensus().nVotesRejectProposal));
 }
@@ -471,9 +502,9 @@ CAmount CGovernance::CProposal::GetAvailable(CCoinsViewCache& coins, bool fInclu
 std::string CGovernance::CProposal::ToString(CCoinsViewCache& coins, uint32_t currentTime) const {
     std::string str;
     str += strprintf("CProposal(hash=%s, nVersion=%i, nAmount=%f, available=%f, nFee=%f, address=%s, nDeadline=%u, nVotesYes=%u, "
-                     "nVotesNo=%u, nVotingCycle=%u, fState=%s, strDZeel=%s, blockhash=%s)",
+                     "nVotesNo=%u, nVotesAbstain=%u, nVotingCycle=%u, fState=%s, strDZeel=%s, blockhash=%s)",
                      hash.ToString(), nVersion, (float)nAmount/COIN, (float)GetAvailable(coins)/COIN, (float)nFee/COIN, Address, nDeadline,
-                     nVotesYes, nVotesNo, nVotingCycle, GetState(currentTime), strDZeel, blockhash.ToString().substr(0,10));
+                     nVotesYes, nVotesNo, nVotesAbstain, nVotingCycle, GetState(currentTime), strDZeel, blockhash.ToString().substr(0,10));
     for (unsigned int i = 0; i < vPayments.size(); i++) {
         CGovernance::CPaymentRequest prequest;
         if(FindPaymentRequest(vPayments[i], prequest))
@@ -543,6 +574,7 @@ void CGovernance::CProposal::ToJson(UniValue& ret, CCoinsViewCache& coins) const
     }
     ret.push_back(Pair("votesYes", nVotesYes));
     ret.push_back(Pair("votesNo", nVotesNo));
+    ret.push_back(Pair("votesAbstain", nVotesAbstain));
     ret.push_back(Pair("votingCycle", (uint64_t)std::min(nVotingCycle, Params().GetConsensus().nCyclesProposalVoting)));
     // votingCycle does not return higher than nCyclesProposalVoting to avoid reader confusion, since votes are not counted anyway when votingCycle > nCyclesProposalVoting
     ret.push_back(Pair("status", GetState(chainActive.Tip()->GetBlockTime())));
@@ -571,6 +603,7 @@ void CGovernance::CPaymentRequest::ToJson(UniValue& ret) const {
     ret.push_back(Pair("requestedAmount", FormatMoney(nAmount)));
     ret.push_back(Pair("votesYes", nVotesYes));
     ret.push_back(Pair("votesNo", nVotesNo));
+    ret.push_back(Pair("votesAbstain", nVotesAbstain));
     ret.push_back(Pair("votingCycle", (uint64_t)std::min(nVotingCycle, Params().GetConsensus().nCyclesPaymentRequestVoting)));
     // votingCycle does not return higher than nCyclesPaymentRequestVoting to avoid reader confusion, since votes are not counted anyway when votingCycle > nCyclesPaymentRequestVoting
     ret.push_back(Pair("status", GetState()));

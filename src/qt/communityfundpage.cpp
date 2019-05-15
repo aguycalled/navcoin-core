@@ -152,7 +152,7 @@ void CommunityFundPage::refresh(bool all, bool proposal)
                         if (proposal.fState == CGovernance::NIL && proposal.GetState(pindexBestHeader->GetBlockTime()).find("expired") == string::npos)
                         {
                             auto it = std::find_if( vAddedProposalVotes.begin(), vAddedProposalVotes.end(),
-                                                    [&proposal](const std::pair<std::string, bool>& element){ return element.first == proposal.hash.ToString();} );
+                                                    [&proposal](const std::pair<std::string, int>& element){ return element.first == proposal.hash.ToString();} );
                             if (it != vAddedProposalVotes.end())
                             {
                                 append(new CommunityFundDisplay(0, proposal));
@@ -172,7 +172,7 @@ void CommunityFundPage::refresh(bool all, bool proposal)
                         if (proposal.fState == CGovernance::NIL && proposal.GetState(pindexBestHeader->GetBlockTime()).find("expired") == string::npos)
                         {
                             auto it = std::find_if( vAddedProposalVotes.begin(), vAddedProposalVotes.end(),
-                                                    [&proposal](const std::pair<std::string, bool>& element){ return element.first == proposal.hash.ToString();} );
+                                                    [&proposal](const std::pair<std::string, int>& element){ return element.first == proposal.hash.ToString();} );
                             if (it != vAddedProposalVotes.end())
                             {
                                 continue;
@@ -231,7 +231,7 @@ void CommunityFundPage::refresh(bool all, bool proposal)
                         if (prequest.fState == CGovernance::NIL && prequest.GetState().find("expired") == string::npos)
                         {
                             auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
-                                                    [&prequest](const std::pair<std::string, bool>& element){ return element.first == prequest.hash.ToString();} );
+                                                    [&prequest](const std::pair<std::string, int>& element){ return element.first == prequest.hash.ToString();} );
                             if (it != vAddedPaymentRequestVotes.end())
                             {
                                 append(new CommunityFundDisplayPaymentRequest(0, prequest));
@@ -251,7 +251,7 @@ void CommunityFundPage::refresh(bool all, bool proposal)
                         if (prequest.fState == CGovernance::NIL && prequest.GetState().find("expired") == string::npos)
                         {
                             auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
-                                                    [&prequest](const std::pair<std::string, bool>& element){ return element.first == prequest.hash.ToString();} );
+                                                    [&prequest](const std::pair<std::string, int>& element){ return element.first == prequest.hash.ToString();} );
                             if (it != vAddedPaymentRequestVotes.end())
                             {
                                 continue;

@@ -691,11 +691,13 @@ public:
     bool IsProposalVote() const;
     bool IsProposalVoteYes() const;
     bool IsProposalVoteNo() const;
+    bool IsProposalVoteAbstain() const;
     bool IsPaymentRequestVote() const;
     bool IsPaymentRequestVoteYes() const;
     bool IsPaymentRequestVoteNo() const;
+    bool IsPaymentRequestVoteAbstain() const;
     bool IsPool() const;
-    bool ExtractVote(uint256 &hash, bool &vote) const;
+    bool ExtractVote(uint256 &hash, int &vote) const;
 
     /** Called by IsStandardTx and P2SH/BIP62 VerifyScript (which makes it consensus-critical). */
     bool IsPushOnly(const_iterator pc) const;

@@ -17,8 +17,8 @@ using namespace std;
 class CTransaction;
 class CCoinsViewCache;
 
-extern std::vector<std::pair<std::string, bool>> vAddedProposalVotes;
-extern std::vector<std::pair<std::string, bool>> vAddedPaymentRequestVotes;
+extern std::vector<std::pair<std::string, int>> vAddedProposalVotes;
+extern std::vector<std::pair<std::string, int>> vAddedPaymentRequestVotes;
 
 namespace CGovernance {
 
@@ -70,7 +70,7 @@ bool IsValidConsultation(CTransaction tx, int nMaxVersion);
 class CPaymentRequest
 {
 public:
-    static const int32_t CURRENT_VERSION=3;
+    static const int32_t CURRENT_VERSION=4;
 
     CAmount nAmount;
     flags fState;
@@ -81,6 +81,7 @@ public:
     uint256 paymenthash;
     int nVotesYes;
     int nVotesNo;
+    int nVotesAbstain;
     string strDZeel;
     int nVersion;
     unsigned int nVotingCycle;
@@ -92,6 +93,7 @@ public:
         fState = NIL;
         nVotesYes = 0;
         nVotesNo = 0;
+        nVotesAbstain = 0;
         hash = uint256();
         blockhash = uint256();
         txblockhash = uint256();
@@ -103,7 +105,7 @@ public:
     }
 
     bool IsNull() const {
-        return (nAmount == 0 && fState == NIL && nVotesYes == 0 && nVotesNo == 0 && strDZeel == "");
+        return (nAmount == 0 && fState == NIL && nVotesYes == 0  && nVotesAbstain == 0 && nVotesNo == 0 && strDZeel == "");
     }
 
     std::string GetState() const {
@@ -124,9 +126,9 @@ public:
     }
 
     std::string ToString() const {
-        return strprintf("CPaymentRequest(hash=%s, nVersion=%d, nAmount=%f, fState=%s, nVotesYes=%u, nVotesNo=%u, nVotingCycle=%u, "
+        return strprintf("CPaymentRequest(hash=%s, nVersion=%d, nAmount=%f, fState=%s, nVotesYes=%u, nVotesNo=%u, nVotesAbstain=%u, nVotingCycle=%u, "
                          " proposalhash=%s, blockhash=%s, paymenthash=%s, strDZeel=%s)",
-                         hash.ToString(), nVersion, (float)nAmount/COIN, GetState(), nVotesYes, nVotesNo,
+                         hash.ToString(), nVersion, (float)nAmount/COIN, GetState(), nVotesYes, nVotesNo, nVotesAbstain,
                          nVotingCycle, proposalhash.ToString(), blockhash.ToString().substr(0,10),
                          paymenthash.ToString().substr(0,10), strDZeel);
     }
@@ -181,6 +183,8 @@ public:
         // Version-based read/write
         if(nVersion >= 2)
            READWRITE(nVotingCycle);
+        if(nVersion >= 4)
+           READWRITE(nVotesAbstain);
     }
 
 };
@@ -188,7 +192,7 @@ public:
 class CProposal
 {
 public:
-    static const int32_t CURRENT_VERSION=3;
+    static const int32_t CURRENT_VERSION=4;
 
     CAmount nAmount;
     CAmount nFee;
@@ -197,6 +201,7 @@ public:
     flags fState;
     int nVotesYes;
     int nVotesNo;
+    int nVotesAbstain;
     std::vector<uint256> vPayments;
     std::string strDZeel;
     uint256 hash;
@@ -214,6 +219,7 @@ public:
         fState = NIL;
         nVotesYes = 0;
         nVotesNo = 0;
+        nVotesAbstain = 0;
         nDeadline = 0;
         vPayments.clear();
         strDZeel = "";
@@ -225,7 +231,7 @@ public:
 
     bool IsNull() const {
         return (nAmount == 0 && nFee == 0 && Address == "" && nVotesYes == 0 && fState == NIL
-                && nVotesNo == 0 && nDeadline == 0 && strDZeel == "");
+                && nVotesNo == 0 && nVotesAbstain == 0 && nDeadline == 0 && strDZeel == "");
     }
 
     std::string ToString(CCoinsViewCache& coins, uint32_t currentTime = 0) const;
@@ -297,10 +303,10 @@ public:
         READWRITE(txblockhash);
 
         // Version-based read/write
-        if(nVersion >= 2) {
+        if(nVersion >= 2)
            READWRITE(nVotingCycle);
-        }
-
+        if(nVersion >= 4)
+           READWRITE(nVotesAbstain);
     }
 };
 

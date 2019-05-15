@@ -140,17 +140,17 @@ void CommunityFundDisplayPaymentRequest::refresh()
         // Get prequest votes list
         CGovernance::CPaymentRequest preq = prequest;
         auto it = std::find_if( vAddedPaymentRequestVotes.begin(), vAddedPaymentRequestVotes.end(),
-                                [&preq](const std::pair<std::string, bool>& element){ return element.first == preq.hash.ToString();} );
+                                [&preq](const std::pair<std::string, int>& element){ return element.first == preq.hash.ToString();} );
         if (it != vAddedPaymentRequestVotes.end())
         {
-            if (it->second)
+            if (it->second == 1)
             {
                 // Prequest was voted yes, shade in yes button and unshade no button
                 ui->buttonBoxVote->setStandardButtons(QDialogButtonBox::No|QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
                 ui->buttonBoxVote->button(QDialogButtonBox::Yes)->setStyleSheet(COLOR_VOTE_YES);
                 ui->buttonBoxVote->button(QDialogButtonBox::No)->setStyleSheet(COLOR_VOTE_NEUTRAL);
             }
-            else
+            else if (it->second == 0)
             {
                 // Prequest was noted no, shade in no button and unshade yes button
                 ui->buttonBoxVote->setStandardButtons(QDialogButtonBox::No|QDialogButtonBox::Yes|QDialogButtonBox::Cancel);
