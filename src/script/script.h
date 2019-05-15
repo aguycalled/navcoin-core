@@ -180,11 +180,14 @@ enum opcodetype
     OP_NOP9 = 0xb8,
     OP_NOP10 = 0xb9,
 
-    OP_CFUND = 0xc1,
+    OP_GOVERNANCE = 0xc1,
     OP_PROP = 0xc2,
     OP_PREQ = 0xc3,
     OP_YES = 0xc4,
     OP_NO = 0xc5,
+    OP_ABSTAIN = 0xc7,
+    OP_CONSULTATION = 0xc8,
+
 
     OP_COINSTAKE = 0xc6,
 
