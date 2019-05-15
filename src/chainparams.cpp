@@ -193,6 +193,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_QUORUM_CFUND].nStartTime = 1543622400; // Dec 1st, 2018
         consensus.vDeployments[Consensus::DEPLOYMENT_QUORUM_CFUND].nTimeout = 1575158400; // Dec 1st, 2019
 
+        // Deployment of Community Polls
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].bit = 18;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].nStartTime = 1557878400; // May 15th, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].nTimeout = 1652572800; // May 15th, 2022
+
         /**
          * The message start string is designed to be unlikely to occur in normal data.
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
@@ -375,6 +380,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_QUORUM_CFUND].nStartTime = 1543622400; // Dec 1st, 2018
         consensus.vDeployments[Consensus::DEPLOYMENT_QUORUM_CFUND].nTimeout = 1575158400; // Dec 1st, 2019
 
+        // Deployment of Community Polls
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].bit = 18;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].nStartTime = 1557878400; // May 15th, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].nTimeout = 1652572800; // May 15th, 2022
+
         /**
          * The message start string is designed to be unlikely to occur in normal data.
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
@@ -549,6 +559,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_QUORUM_CFUND].bit = 17;
         consensus.vDeployments[Consensus::DEPLOYMENT_QUORUM_CFUND].nStartTime = 1543622400; // Dec 1st, 2018
         consensus.vDeployments[Consensus::DEPLOYMENT_QUORUM_CFUND].nTimeout = 1651363200; // May 1st, 2022
+
+        // Deployment of Community Polls
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].bit = 18;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].nStartTime = 1557878400; // May 15th, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].nTimeout = 1652572800; // May 15th, 2022
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -734,6 +749,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_QUORUM_CFUND].bit = 17;
         consensus.vDeployments[Consensus::DEPLOYMENT_QUORUM_CFUND].nStartTime = 1543622400; // Dec 1st, 2018
         consensus.vDeployments[Consensus::DEPLOYMENT_QUORUM_CFUND].nTimeout = 1575158400; // Dec 1st, 2019
+
+        // Deployment of Community Polls
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].bit = 18;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].nStartTime = 1557878400; // May 15th, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_CFUND_POLLS].nTimeout = 1652572800; // May 15th, 2022
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.

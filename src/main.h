@@ -523,6 +523,8 @@ bool IsStaticRewardLocked(const CBlockIndex* pindexPrev, const Consensus::Params
 bool IsNtpSyncEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
 
 bool IsReducedCFundQuorumEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
+bool IsCFundPollsEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
+
 
 /** Check whether ColdStaking has been activated. */
 bool IsColdStakingEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
