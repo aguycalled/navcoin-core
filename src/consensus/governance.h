@@ -24,6 +24,7 @@ namespace CGovernance {
 
 class CProposal;
 class CPaymentRequest;
+class CConsultation;
 
 typedef unsigned int flags;
 
@@ -33,24 +34,38 @@ static const flags REJECTED = 0x2;
 static const flags EXPIRED = 0x3;
 static const flags PENDING_FUNDS = 0x4;
 static const flags PENDING_VOTING_PREQ = 0x5;
+static const flags FINISHED = 0x6;
 
 void SetScriptForCommunityFundContribution(CScript &script);
 void SetScriptForProposalVote(CScript &script, uint256 proposalhash, int vote);
 void SetScriptForPaymentRequestVote(CScript &script, uint256 prequest, int vote);
+void SetScriptForConsultationApprovalVote(CScript &script, uint256 consultation, int vote);
+
 bool FindProposal(string propstr, CGovernance::CProposal &proposal);
 bool FindProposal(uint256 prophash, CGovernance::CProposal &proposal);
 bool FindPaymentRequest(uint256 preqhash, CGovernance::CPaymentRequest &prequest);
 bool FindPaymentRequest(string preqstr, CGovernance::CPaymentRequest &prequest);
-bool VoteProposal(string strProp, bool vote, bool &duplicate);
-bool VoteProposal(uint256 proposalHash, bool vote, bool &duplicate);
+bool FindConsultation(uint256 chash, CGovernance::CConsultation &consultation);
+bool FindConsultation(string cstr, CGovernance::CConsultation &consultation);
+
+bool VoteProposal(string strProp, int vote, bool &duplicate);
+bool VoteProposal(uint256 proposalHash, int vote, bool &duplicate);
 bool RemoveVoteProposal(string strProp);
 bool RemoveVoteProposal(uint256 proposalHash);
-bool VotePaymentRequest(string strProp, bool vote, bool &duplicate);
-bool VotePaymentRequest(uint256 proposalHash, bool vote, bool &duplicate);
+
+bool VoteConsultation(string strProp, int vote, bool &duplicate);
+bool VoteConsultation(uint256 proposalHash, int vote, bool &duplicate);
+bool RemoveVoteConsultation(string strProp);
+bool RemoveVoteConsultation(uint256 proposalHash);
+
+bool VotePaymentRequest(string strProp, int vote, bool &duplicate);
+bool VotePaymentRequest(uint256 proposalHash, int vote, bool &duplicate);
 bool RemoveVotePaymentRequest(string strProp);
 bool RemoveVotePaymentRequest(uint256 proposalHash);
+
 bool IsValidPaymentRequest(CTransaction tx, CCoinsViewCache& coins, int nMaxVersion);
 bool IsValidProposal(CTransaction tx, int nMaxVersion);
+bool IsValidConsultation(CTransaction tx, int nMaxVersion);
 
 class CPaymentRequest
 {
