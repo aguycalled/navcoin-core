@@ -341,14 +341,8 @@ bool static Bind(const CService &addr, unsigned int flags) {
 
 void OnRPCStopped()
 {
-    uiInterface.NotifyBlockTip.disconnect(RPCNotifyBlockChange);
     cvBlockChange.notify_all();
     LogPrint("rpc", "RPC stopped.\n");
-}
-
-void OnRPCStarted()
-{
-    uiInterface.NotifyBlockTip.connect(RPCNotifyBlockChange);
 }
 
 void OnRPCPreCommand(const CRPCCommand& cmd)

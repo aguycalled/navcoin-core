@@ -14,14 +14,12 @@ class CFundPaymentRequestStateReorg(NavCoinTestFramework):
     """Tests consistency of Community Fund Payment Requests state through reorgs."""
 
     def set_test_params(self):
-        
-        self.setup_clean_chain = True
         self.num_nodes = 2
+        self.extra_args = [["-debug","-headerspamfiltermaxsize=1000"]]*self.num_nodes
+        self.setup_clean_chain = True
 
     def setup_network(self, split=False):
-        self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-debug","-headerspamfiltermaxsize=1000"]))
-        self.nodes.append(start_node(1, self.options.tmpdir, ["-debug","-headerspamfiltermaxsize=1000"]))
+        self.setup_nodes()
         connect_nodes(self.nodes[0], 1)
         self.is_network_split = False
 

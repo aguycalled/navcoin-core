@@ -56,24 +56,24 @@ BASE_SCRIPTS= [
     # Scripts that are run by the travis build process.
     # Longest test should go first, to favor running tests in parallel
     # 'wallet_backup.py',
-    # 'p2p_pos_fakestake.py',
-    # 'p2p_pos_fakestake_accepted.py',
+    #'p2p_pos_fakestake.py',
+    #'p2p_pos_fakestake_accepted.py',
     # vv Tests less than 5m vv
     # 'feature_block.py',
     # 'rpc_fundrawtransaction.py',
     # vv Tests less than 2m vv
-    # 'p2p_pos_doublespend.py',
-    'wallet_basic.py',
+    #'p2p_pos_doublespend.py',
+    #'wallet_basic.py',
     'wallet_hd.py',
     # 'wallet_accounts.py',
     # 'wallet_dump.py',
     # 'rpc_listtransactions.py',
     # vv Tests less than 60s vv
     'wallet_zapwallettxes.py',
-    'rpc_txoutproof.py', # Replaces merkle
+    #'rpc_txoutproof.py', # Replaces merkle
     # 'wallet_importmulti.py',
     #'mempool_limit.py', # We currently don't limit our mempool
-    'wallet_listreceivedby.py',
+    #'wallet_listreceivedby.py',
     # 'wallet_abandonconflict.py',
     'rpc_rawtransaction.py',
     'feature_reindex.py',
@@ -86,13 +86,13 @@ BASE_SCRIPTS= [
     # 'mempool_resurrect.py',
     # 'wallet_txn_doublespend.py --mineblock',
     # 'wallet_txn_clone.py --mineblock',
-    'rpc_getchaintips.py',
+    #'rpc_getchaintips.py',
     'interface_rest.py',
-    'mempool_spend_coinbase.py',
+    #'mempool_spend_coinbase.py',
     # 'mempool_reorg.py',
     # 'mempool_persist.py', # Not yet implemented
-    'interface_http.py',
-    'rpc_users.py',
+    #'interface_http.py',
+    #'rpc_users.py',
     # 'feature_proxy.py',
     # 'rpc_signrawtransaction.py',
     'p2p_disconnect_ban.py',

@@ -188,12 +188,8 @@ extern std::string HelpRequiringPassphrase();
 extern std::string HelpExampleCli(const std::string& methodname, const std::string& args);
 extern std::string HelpExampleRpc(const std::string& methodname, const std::string& args);
 
-extern UniValue waitforblockheight(const UniValue& params, bool fHelp);
-extern UniValue waitfornewblock(const UniValue& params, bool fHelp);
-extern UniValue waitforblock(const UniValue& params, bool fHelp);
 extern UniValue computeblockversion(const UniValue& params, bool fHelp);
-
-void RPCNotifyBlockChange(const uint256 nHeight);
+extern UniValue computenbits(const UniValue& params, bool fHelp);
 
 extern void EnsureWalletIsUnlocked();
 

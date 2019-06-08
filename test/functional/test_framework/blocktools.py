@@ -8,7 +8,7 @@ from .mininode import *
 from .script import CScript, OP_TRUE, OP_CHECKSIG, OP_RETURN
 
 # Create a block (with devnet difficulty)
-def create_block(hashprev, coinbase, nTime=None, nVersion=0):
+def create_block(hashprev, nbits, coinbase, nTime=None, nVersion=0):
     block = CBlock()
     if nTime is None:
         import time
@@ -16,7 +16,7 @@ def create_block(hashprev, coinbase, nTime=None, nVersion=0):
     else:
         block.nTime = nTime
     block.hashPrevBlock = hashprev
-    block.nBits = 0x1e0ffff0 # Will break after a difficulty adjustment...
+    block.nBits = nbits
     block.nAccumulatorCheckpoint = 0
     block.vtx.append(coinbase)
     block.hashMerkleRoot = block.calc_merkle_root()

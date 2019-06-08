@@ -23,8 +23,7 @@ class MnemonicTest(NavCoinTestFramework):
         self.mnemonics = {}
 
     def setup_network(self):
-        self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, []))
+        self.setup_nodes()
         self.is_network_split = False
 
     def run_test (self):

@@ -13,16 +13,15 @@ from test_framework.util import *
 from test_framework.mininode import *
 
 class RejectVersionBitTest(NavCoinTestFramework):
+    def set_test_params(self):
+        self.num_nodes = 2
 
     def setup_chain(self):
         print("Initializing test directory "+self.options.tmpdir)
         initialize_chain_clean(self.options.tmpdir, 4)
 
     def setup_network(self):
-        self.nodes = []
-        # Nodes 0/1 are "wallet" nodes
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-rejectversionbit=6"]))
-        self.nodes.append(start_node(1, self.options.tmpdir, []))
+        self.setup_nodes()
         connect_nodes(self.nodes[0], 1)
         self.is_network_split = False
         self.sync_all()

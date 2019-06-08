@@ -15,8 +15,7 @@ class StakingAddressTest(NavCoinTestFramework):
         self.node_args = ["-stakingaddress="]
 
     def setup_network(self, split=False):
-        self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, []))
+        self.setup_nodes()
         self.is_network_split = split
 
     def run_test(self):

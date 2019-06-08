@@ -10,6 +10,7 @@ class WalletTest(NavCoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 4
+        self.extra_args = [['-staking=0']]*self.num_nodes
 
     def setup_network(self):
         self.add_nodes(4)

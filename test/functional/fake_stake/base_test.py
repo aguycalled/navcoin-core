@@ -50,7 +50,7 @@ class PIVX_FakeStakeTest(NavCoinTestFramework):
         '''
         self.log.info("\n\n*** Starting %s ***\n------------------------\n%s\n", self.__class__.__name__, self.description)
         # Global Test parameters (override in run_test)
-        self.DEFAULT_FEE = 0.1
+        self.DEFAULT_FEE = 0.001
         # Spam blocks to send in current test
         self.NUM_BLOCKS = 30
 
@@ -79,7 +79,7 @@ class PIVX_FakeStakeTest(NavCoinTestFramework):
 
 
 
-    def create_spam_block(self, hashPrevBlock, stakingPrevOuts, height, fStakeDoubleSpent=False, spendingPrevOuts={}):
+    def create_spam_block(self, hashPrevBlock, timePrevBlock, stakingPrevOuts, height, fStakeDoubleSpent=False, spendingPrevOuts={}):
         ''' creates a block to spam the network with
         :param   hashPrevBlock:      (hex string) hash of previous block
                  stakingPrevOuts:    ({COutPoint --> (int, int, int, str)} dictionary)
@@ -98,8 +98,11 @@ class PIVX_FakeStakeTest(NavCoinTestFramework):
             spendingPrevOuts = dict(stakingPrevOuts)
 
         # Get current time
+        nTime = 0
         current_time = int(time.time())
-        nTime = current_time & 0xfffffff0
+        while nTime < timePrevBlock:
+            nTime = max(timePrevBlock, current_time) & 0xfffffff0
+            current_time = current_time + 1
 
         # Create coinbase TX
         # Even if PoS blocks have empty coinbase vout, the height is required for the vin script
@@ -110,7 +113,7 @@ class PIVX_FakeStakeTest(NavCoinTestFramework):
         coinbase.rehash()
 
         # Create Block with coinbase
-        block = create_block(int(hashPrevBlock, 16), coinbase, nTime, self.nodes[0].computeblockversion())
+        block = create_block(int(hashPrevBlock, 16), self.nodes[0].computenbits(), coinbase, nTime, self.nodes[0].computeblockversion())
 
         # Find valid kernel hash - Create a new private key used for block signing.
         if not block.solve_stake(stakingPrevOuts):
@@ -339,15 +342,15 @@ class PIVX_FakeStakeTest(NavCoinTestFramework):
                 randomCount = randint(block_count - randomRange, block_count - randomRange2)
                 pastBlockHash = self.node.getblockhash(randomCount)
 
+            pastBlockTime = self.node.getblock(pastBlockHash)["time"]
+
             # Get spending prevouts and staking prevouts for the height of current block
             current_block_n = randomCount + 1
             stakingPrevOuts = self.get_prevouts(staking_utxo_list, randomCount)
             spendingPrevOuts = self.get_prevouts(spending_utxo_list, randomCount)
 
-            time.sleep(16)
-
             # Create the spam block
-            block = self.create_spam_block(pastBlockHash, stakingPrevOuts, current_block_n,
+            block = self.create_spam_block(pastBlockHash, pastBlockTime, stakingPrevOuts, current_block_n,
                                            fStakeDoubleSpent=fDoubleSpend, spendingPrevOuts=spendingPrevOuts)
 
             # Log time and size of the block

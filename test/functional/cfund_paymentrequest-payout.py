@@ -14,18 +14,12 @@ class CommunityFundPaymentRequestPayout(NavCoinTestFramework):
     """Tests the payment request procedures of the Community fund."""
 
     def set_test_params(self):
-        
         self.setup_clean_chain = True
         self.num_nodes = 2
 
     def setup_network(self, split=False):
-        self.nodes = []
-
-        self.nodes.append(start_node(0, self.options.tmpdir, []))
-        self.nodes.append(start_node(1, self.options.tmpdir, []))
-
+        self.setup_nodes()
         connect_nodes(self.nodes[0], 1)
-
         self.is_network_split = split
 
     def run_test(self):
