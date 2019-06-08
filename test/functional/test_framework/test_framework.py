@@ -231,7 +231,7 @@ class NavCoinTestFramework():
         node.start(*args, **kwargs)
         node.wait_for_rpc_connection()
 
-        time.sleep(10)
+        time.sleep(5)
 
         if self.options.coveragedir is not None:
             coverage.write_all_rpc_commands(self.options.coveragedir, node.rpc)
@@ -252,7 +252,7 @@ class NavCoinTestFramework():
             self.stop_nodes()
             raise
 
-        time.sleep(10)
+        time.sleep(5)
 
         if self.options.coveragedir is not None:
             for node in self.nodes:
@@ -271,7 +271,6 @@ class NavCoinTestFramework():
 
         for node in self.nodes:
             # Wait for nodes to stop
-            time.sleep(5)
             node.wait_until_stopped()
 
     def restart_node(self, i, extra_args=None):
@@ -392,10 +391,10 @@ class NavCoinTestFramework():
                 if os.path.isdir(get_datadir_path(self.options.cachedir, i)):
                     shutil.rmtree(get_datadir_path(self.options.cachedir, i))
 
-            # Create cache directories, run bitcoinds:
+            # Create cache directories, run navcoinds:
             for i in range(MAX_NODES):
                 datadir = initialize_datadir(self.options.cachedir, i)
-                args = [os.getenv("BITCOIND", "navcoind"), "-spendzeroconfchange=1", "-server", "-keypool=1", "-datadir=" + datadir, "-discover=0"]
+                args = [os.getenv("NAVCOIND", "navcoind"), "-spendzeroconfchange=1", "-server", "-keypool=1", "-datadir=" + datadir, "-discover=0"]
                 if i > 0:
                     args.append("-connect=127.0.0.1:" + str(p2p_port(0)))
                 self.nodes.append(TestNode(i, self.options.cachedir, extra_args=[], rpchost=None, timewait=None, binary=None, stderr=None, mocktime=self.mocktime, coverage_dir=None))
@@ -465,10 +464,10 @@ class ComparisonTestFramework(NavCoinTestFramework):
 
     def add_options(self, parser):
         parser.add_option("--testbinary", dest="testbinary",
-                          default=os.getenv("BITCOIND", "navcoind"),
+                          default=os.getenv("NAVCOIND", "navcoind"),
                           help="navcoind binary to test")
         parser.add_option("--refbinary", dest="refbinary",
-                          default=os.getenv("BITCOIND", "navcoind"),
+                          default=os.getenv("NAVCOIND", "navcoind"),
                           help="navcoind binary to use for reference nodes (if any)")
 
     def setup_network(self):

@@ -27,8 +27,10 @@
 #include "pos.h"
 
 #include <stdint.h>
-
 #include <univalue.h>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include <boost/thread/thread.hpp> // boost::thread::interrupt
 

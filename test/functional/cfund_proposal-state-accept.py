@@ -12,12 +12,12 @@ class CommunityFundProposalStateTest(NavCoinTestFramework):
     """Tests the state transition of proposals of the Community fund."""
 
     def set_test_params(self):
-        
+
         self.setup_clean_chain = True
         self.num_nodes = 1
 
     def setup_network(self, split=False):
-        self.nodes = self.setup_nodes()
+        self.setup_nodes()
         self.is_network_split = split
 
     def run_test(self):

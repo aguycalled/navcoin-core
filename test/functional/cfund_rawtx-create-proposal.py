@@ -12,7 +12,6 @@ class CommunityFundRawTXCreateProposalTest(NavCoinTestFramework):
     """Tests the state transition of proposals of the Community fund."""
 
     def set_test_params(self):
-        
         self.setup_clean_chain = True
         self.num_nodes = 1
 
@@ -26,7 +25,7 @@ class CommunityFundRawTXCreateProposalTest(NavCoinTestFramework):
     def setup_network(self, split=False):
         self.all_desc_text_options()
 
-        self.nodes = self.setup_nodes()
+        self.setup_nodes()
         self.is_network_split = split
 
     def run_test(self):
@@ -270,7 +269,7 @@ class CommunityFundRawTXCreateProposalTest(NavCoinTestFramework):
         self.descTxtAllCharsSymbol3 = "♩ ♪ ♫ ♬ ♭ ♮ ♯  ⌨ ⏏ ⎗ ⎘ ⎙ ⎚ ⌥ ⎇ ⌘ ⌦ ⌫ ⌧ ♲ ♳ ♴ ♵ ♶ ♷ ♸ ♹ ♺ ♻ ♼ ♽ ⁌ ⁍ ⎌ ⌇ ⌲ ⍝ ⍟ ⍣ ⍤ ⍥ ⍨ ⍩ ⎋ ♃ ♄ ♅ ♆ ♇ ♈ ♉ ♊ ♋ ♌ ♍ ♎ ♏ ♐ ♑ ♒ ♓ ⏚ ⏛"
 
 
-        self.descTxtWhiteSpace = '''I 
+        self.descTxtWhiteSpace = '''I
 Have
 Enters
 

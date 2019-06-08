@@ -29,9 +29,10 @@ class WalletAccountsTest(NavCoinTestFramework):
 
         # Note each time we call generate, all generated coins go into
         # the same address, so we call twice to get two addresses w/50 each
+        # Genesis block has ALOT OF COINS
         node.generate(1)
         node.generate(101)
-        assert_equal(node.getbalance(), 500)
+        assert_equal(node.getbalance(), 59800000)
 
         # there should be 2 address groups
         # each with 1 address with a balance of 50 Bitcoins

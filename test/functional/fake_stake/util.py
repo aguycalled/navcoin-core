@@ -16,7 +16,7 @@ A peer we use to send messsages to navcoind and store responses
 Extends P2PInterface.
 '''
 
-# TestNode: A peer we use to send messages to bitcoind, and store responses.
+# TestNode: A peer we use to send messages to navcoind, and store responses.
 class TestNode(P2PInterface):
     def __init__(self):
         super().__init__()

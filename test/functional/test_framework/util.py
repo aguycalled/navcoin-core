@@ -297,6 +297,12 @@ def initialize_datadir(dirname, n):
         f.write("rpcport=" + str(rpc_port(n)) + "\n")
         f.write("listenonion=0\n")
         f.write("spendzeroconfchange=1\n")
+
+        # Check if we need to use localntp
+        if os.getenv("LOCAL_NTP", False):
+            logger.debug("Using local ntp server")
+            f.write("ntpserver=localhost\n")
+            f.write("ntpminmeasures=1\n")
     return datadir
 
 def rpc_auth_pair(n):

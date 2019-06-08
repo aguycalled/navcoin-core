@@ -117,6 +117,7 @@ jobs:
         HOST=x86_64-unknown-linux-gnu
         PACKAGES="python3-zmq"
         DEP_OPTS="NO_QT=1 NO_UPNP=1 DEBUG=1"
+        TEST_RUNNER_EXTRA="--coverage --extended
         GOAL="install"
         NAVCOIN_CONFIG="--enable-zmq --enable-glibc-back-compat --enable-reduce-exports CPPFLAGS=-DDEBUG_LOCKORDER"
 

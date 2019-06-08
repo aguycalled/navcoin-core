@@ -16,7 +16,7 @@ class CommunityFundPaymentRequestExtractFundsTest(NavCoinTestFramework):
         self.num_nodes = 1
 
     def setup_network(self, split=False):
-        self.nodes = self.setup_nodes()
+        self.setup_nodes()
         self.is_network_split = split
 
     def run_test(self):
