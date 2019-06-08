@@ -47,7 +47,7 @@ class InvalidBlockRequestTest(ComparisonTestFramework):
         Create a new block with an anyone-can-spend coinbase
         '''
         height = 1
-        block = create_block(self.tip, create_coinbase(height), self.block_time)
+        block = create_block(self.tip, create_coinbase(height), self.block_time, self.nodes[0].computeblockversion())
         self.block_time += 1
         block.solve()
         # Save the coinbase for later
@@ -61,7 +61,7 @@ class InvalidBlockRequestTest(ComparisonTestFramework):
         '''
         test = TestInstance(sync_every_block=False)
         for i in range(100):
-            block = create_block(self.tip, create_coinbase(height), self.block_time)
+            block = create_block(self.tip, create_coinbase(height), self.block_time, self.nodes[0].computeblockversion())
             block.solve()
             self.tip = block.sha256
             self.block_time += 1
@@ -76,7 +76,7 @@ class InvalidBlockRequestTest(ComparisonTestFramework):
         coinbase, spend of that spend).  Duplicate the 3rd transaction to
         leave merkle root and blockheader unchanged but invalidate the block.
         '''
-        block2 = create_block(self.tip, create_coinbase(height), self.block_time)
+        block2 = create_block(self.tip, create_coinbase(height), self.block_time, self.nodes[0].computeblockversion())
         self.block_time += 1
 
         # b'0x51' is OP_TRUE
@@ -103,7 +103,7 @@ class InvalidBlockRequestTest(ComparisonTestFramework):
         '''
         Make sure that a totally screwed up block is not valid.
         '''
-        block3 = create_block(self.tip, create_coinbase(height), self.block_time)
+        block3 = create_block(self.tip, create_coinbase(height), self.block_time, self.nodes[0].computeblockversion())
         self.block_time += 1
         block3.vtx[0].vout[0].nValue = 100 * COIN # Too high!
         block3.vtx[0].sha256=None

@@ -113,11 +113,11 @@ class FullBlockTest(ComparisonTestFramework):
         coinbase.vout[0].nValue += additional_coinbase_value
         coinbase.rehash()
         if spend == None:
-            block = create_block(base_block_hash, coinbase, block_time)
+            block = create_block(base_block_hash, coinbase, block_time, self.nodes[0].computeblockversion())
         else:
             coinbase.vout[0].nValue += spend.tx.vout[spend.n].nValue - 1 # all but one satoshi to fees
             coinbase.rehash()
-            block = create_block(base_block_hash, coinbase, block_time)
+            block = create_block(base_block_hash, coinbase, block_time, self.nodes[0].computeblockversion())
             tx = create_transaction(spend.tx, spend.n, b"", 1, script)  # spend 1 satoshi
             self.sign_tx(tx, spend.tx, spend.n)
             self.add_transactions_to_block(block, [tx])

@@ -110,7 +110,7 @@ class NULLDUMMYTest(NavCoinTestFramework):
 
 
     def block_submit(self, node, txs, accept = False):
-        block = create_block(self.tip, create_coinbase(self.lastblockheight + 1), self.lastblocktime + 1)
+        block = create_block(self.tip, create_coinbase(self.lastblockheight + 1), self.lastblocktime + 1, self.nodes[0].computeblockversion())
         block.nVersion = 4
         for tx in txs:
             tx.rehash()

@@ -41,7 +41,7 @@ class WalletBackupTest(NavCoinTestFramework):
         self.num_nodes = 4
         self.setup_clean_chain = True
         # nodes 1, 2,3 are spenders, let's give them a keypool=100
-        self.extra_args = [["-keypool=100"], ["-keypool=100"], ["-keypool=100"], []]
+        self.extra_args = [["-keypool=100", "-staking=0"], ["-keypool=100"], ["-keypool=100"], []]
 
     def setup_network(self, split=False):
         self.setup_nodes()
@@ -105,10 +105,10 @@ class WalletBackupTest(NavCoinTestFramework):
         self.nodes[3].generate(100)
         sync_blocks(self.nodes)
 
-        assert_equal(self.nodes[0].getbalance(), 250)
-        assert_equal(self.nodes[1].getbalance(), 250)
-        assert_equal(self.nodes[2].getbalance(), 250)
-        assert_equal(self.nodes[3].getbalance(), 0)
+        assert_equal(self.nodes[0].getbalance(), 59800000.00000000)
+        assert_equal(self.nodes[1].getbalance(), 50)
+        assert_equal(self.nodes[2].getbalance(), 50)
+        assert_equal(self.nodes[3].getbalance(), 4750)
 
         self.log.info("Creating transactions")
         # Five rounds of sending each other transactions.
@@ -139,8 +139,8 @@ class WalletBackupTest(NavCoinTestFramework):
         total = balance0 + balance1 + balance2 + balance3
 
         # At this point, there are 214 blocks (103 for setup, then 10 rounds, then 101.)
-        # 114 are mature, so the sum of all wallets should be 114 * 250 = 28500.
-        assert_equal(total, 28500)
+        # 114 are mature
+        assert_equal(total, 59810399.99730000)
 
         ##
         # Test restoring spender wallets from backups

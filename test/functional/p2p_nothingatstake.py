@@ -26,7 +26,7 @@ NUM_TRANSACTIONS_IN_BLOCK = 2000
 
 class NothingAtStakeDoSTest(NavCoinTestFramework):
 
-    def create_block_header(self, hashPrevBlock, nTime, hashMerkleRoot):
+    def create_block_header(self, hashPrevBlock, nTime, hashMerkleRoot, nVersion):
         block = CBlockHeader()
         block.nTime = nTime
         block.hashPrevBlock = hashPrevBlock
@@ -34,6 +34,7 @@ class NothingAtStakeDoSTest(NavCoinTestFramework):
         block.hashMerkleRoot = hashMerkleRoot
         block.prevoutStake = COutPoint(0xff, 0xffffffff)
         block.vchBlockSig = b"x" * 1024
+        block.nVersion = nVersion
         block.calc_sha256()
         # print(block)
         return block
@@ -55,7 +56,7 @@ class NothingAtStakeDoSTest(NavCoinTestFramework):
             blocks = []
             for b in range(MAX_HEADERS):
                 t = t + 1
-                block = self.create_block_header(prevBlockHash, nTime=t, hashMerkleRoot=i)
+                block = self.create_block_header(prevBlockHash, nTime=t, hashMerkleRoot=i, self.nodes[0].computeblockversion())
                 prevBlockHash = int(block.hash, 16)
                 blocks.append(block)
 
@@ -71,7 +72,7 @@ class NothingAtStakeDoSTest(NavCoinTestFramework):
         time.sleep(2)
         print('\n\nStep 2 of 2: checking how many headers were stored')
         print('Number of headers sent:', sent)
-        print('Please note the value of mapBLockIndex-size in getblockchaininfo()', 
+        print('Please note the value of mapBLockIndex-size in getblockchaininfo()',
             "We have altered the getblockchaininfo() rpc to also print the mapBLockIndex-size for this demo\n\n")
         print("Final mapBlockIndex-size:", self.node.getblockchaininfo()['mapBlockIndex-size'])
 
@@ -93,7 +94,7 @@ class NothingAtStakeDoSTest(NavCoinTestFramework):
             block = None
             # Build a fork with CHAIN_SIZE blocks
             for i in range(CHAIN_SIZE):
-                block = create_block(prev_hash, create_coinbase(i+1, bytes(i)), ntime)
+                block = create_block(prev_hash, create_coinbase(i+1, bytes(i)), ntime, self.nodes[0].computeblockversion())
                 if i > 0:
                 # Most of the chain consists of bogus transactions
                     for j in range(NUM_TRANSACTIONS_IN_BLOCK):
@@ -114,7 +115,7 @@ class NothingAtStakeDoSTest(NavCoinTestFramework):
             for b in fork_blocks:
                 self.test_nodes[0].send_message(msg_block(b))
             if fork_iter % 10 == 0:
-                print(str(fork_iter) + " forks out of " + str(NUM_FORKS) + " forks stored in disk.", "Single Fork size =", 
+                print(str(fork_iter) + " forks out of " + str(NUM_FORKS) + " forks stored in disk.", "Single Fork size =",
                     CHAIN_SIZE, "blocks; Single block size =", len(block.serialize()))
         print("\n\nFinal size of data dir")
         print_dir_size(self.options.tmpdir+'/node0/devnet/blocks/')
@@ -140,4 +141,3 @@ class NothingAtStakeDoSTest(NavCoinTestFramework):
 
 if __name__ == '__main__':
     NothingAtStakeDoSTest().main()
-

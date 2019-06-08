@@ -13,7 +13,6 @@ node0 checks that immature balance does not affect stake weight
 SENDING_FEE= 0.003393
 BLOCK_REWARD = 50
 
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO, stream=sys.stdout)
 class StakeImmatureBalance(NavCoinTestFramework):
 
     def set_test_params(self):

@@ -41,7 +41,7 @@ class InvalidTxRequestTest(ComparisonTestFramework):
         Create a new block with an anyone-can-spend coinbase
         '''
         height = 1
-        block = create_block(self.tip, create_coinbase(height), self.block_time)
+        block = create_block(self.tip, create_coinbase(height), self.block_time, self.nodes[0].computeblockversion())
         self.block_time += 1
         block.solve()
         # Save the coinbase for later

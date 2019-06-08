@@ -30,7 +30,7 @@ class PIVX_FakeStakeTest(NavCoinTestFramework):
         '''
         self.setup_clean_chain = True
         self.num_nodes = 1
-        self.extra_args = [['-staking=1', '-debug=net']]*self.num_nodes
+        self.extra_args = [['-staking=0', '-debug=net']]*self.num_nodes
 
 
     def setup_network(self):
@@ -343,6 +343,8 @@ class PIVX_FakeStakeTest(NavCoinTestFramework):
             current_block_n = randomCount + 1
             stakingPrevOuts = self.get_prevouts(staking_utxo_list, randomCount)
             spendingPrevOuts = self.get_prevouts(spending_utxo_list, randomCount)
+
+            time.sleep(16)
 
             # Create the spam block
             block = self.create_spam_block(pastBlockHash, stakingPrevOuts, current_block_n,
