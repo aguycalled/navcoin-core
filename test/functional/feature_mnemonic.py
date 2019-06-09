@@ -13,8 +13,7 @@ import os
 
 class MnemonicTest(NavCoinTestFramework):
 
-    def __init__(self):
-        super().__init__()
+    def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1
         self.languages = ["english", "spanish", "italian", "japanese",\
