@@ -4,6 +4,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 import decimal
+import sys
 from test_framework.test_framework import NavCoinTestFramework
 from test_framework.staticr_util import *
 
@@ -12,157 +13,225 @@ class ColdStakingSpending(NavCoinTestFramework):
     # set up num of nodes
     def set_test_params(self):
         self.setup_clean_chain = True
-        self.num_nodes = 2
+        self.num_nodes = 4
     # set up nodes
     def setup_network(self, split=False):
         self.setup_nodes()
-        self.is_network_split = split
+        connect_nodes(self.nodes[0], 1)
+        connect_nodes(self.nodes[0], 2)
+        connect_nodes(self.nodes[0], 3)
+        self.is_network_split = False
 
     def run_test(self):
+
+        # Turn off staking
         self.nodes[0].staking(False)
+        self.nodes[1].staking(False)
+        self.nodes[2].staking(False)
+        self.nodes[3].staking(False)
 
         # Make it to the static rewards fork!
         activate_staticr(self.nodes[0])
+        self.sync_all()
 
         # declare transaction-related constants
-        SENDING_FEE= 0.00010000
-        MIN_COLDSTAKING_SENDING_FEE = 0.0033947
         BLOCK_REWARD = 50
-        # generate address owned by the wallet
-        spending_address_public_key = self.nodes[0].getnewaddress()
-        spending_address_private_key = self.nodes[0].dumpprivkey(spending_address_public_key)
-        # declare third party addresses and keys
-        staking_address_public_key = "mqyGZvLYfEH27Zk3z6JkwJgB1zpjaEHfiW"
-        staking_address_private_key = "cMuNajSALbixZvApkcYVE4KgJoeQY92umhEVdQwqX9wSJUzkmdvF"
-        address_Y_public_key = "mrfjgazyerYxDQHJAPDdUcC3jpmi8WZ2uv"
-        address_Y_private_key = "cST2mj1kXtiRyk8VSXU3F9pnTp7GrGpyqHRv4Gtap8jo4LGUMvqo"
-        # generate coldstaking address which we hold the spending key to
-        coldstaking_address_spending = self.nodes[0].getcoldstakingaddress(staking_address_public_key, spending_address_public_key)
+        SPEND_AMOUNT = 100000
+        RAW_FEE = 0.001
+
+        # Get spending key from node 1
+        spending_address_public_key = self.nodes[1].getnewaddress()
+        spending_address_private_key = self.nodes[1].dumpprivkey(spending_address_public_key)
+
+        # Get the staking key from node 2
+        staking_address_public_key = self.nodes[2].getnewaddress()
+        staking_address_private_key = self.nodes[2].dumpprivkey(staking_address_public_key)
+
+        # Import both keys to node 3
+        self.nodes[3].importprivkey(spending_address_private_key)
+        # self.nodes[3].importprivkey(staking_address_private_key)
+
+        # generate coldstaking address
+        coldstaking_address = self.nodes[0].getcoldstakingaddress(staking_address_public_key, spending_address_public_key)
 
         """check wallet balance and staking weight"""
 
-        # get wallet balance and staking weight before sending some navcoin
+        # get wallet balance 
         balance_before_send = self.nodes[0].getbalance()
-        staking_weight_before_send = self.nodes[0].getstakinginfo()["weight"]
-        # check wallet staking weight roughly equals wallet balance
-        assert_equal(round(staking_weight_before_send / 100000000.0, -5), round(balance_before_send, -5))
+    
+        # Send funds to the cold staking address
+        coldstaing_txid = self.nodes[0].sendtoaddress(coldstaking_address, self.nodes[0].getbalance(), "", "", "", True)
+        self.nodes[0].generate(1)
+        self.sync_all()
 
-        """send navcoin to our coldstaking address, grab balance & staking weight"""
+        # Check the funds arrived at node 1
+        node_1_received = [n for n in self.nodes[1].listunspent(0) if n["address"] == coldstaking_address]
+        assert(len(node_1_received) == 1)
+        assert_equal(coldstaing_txid, node_1_received[0]["txid"])
+        assert(node_1_received[0]["confirmations"] == 1)
 
-        # send funds to the cold staking address (leave some nav for fees) -- we specifically require
-        # a transaction fee of minimum 0.002884 navcoin due to the complexity of this transaction
-        self.nodes[0].sendtoaddress(coldstaking_address_spending, float(self.nodes[0].getbalance()) - MIN_COLDSTAKING_SENDING_FEE)
-        # put transaction in new block & update blockchain
-        slow_gen(self.nodes[0], 1)
-        # create list for all coldstaking utxo recieved
-        listunspent_txs = [n for n in self.nodes[0].listunspent() if n["address"] == coldstaking_address_spending]
-        # asserts we have recieved funds to the coldstaking address
-        assert(len(listunspent_txs) > 0)
-        # asserts that the number of utxo recieved is only 1:
-        assert(len(listunspent_txs) == 1)
-        # asserts if amount recieved is what it should be; ~59814699.99660530 NAV
-        assert_equal(listunspent_txs[0]["amount"], Decimal('59814699.99660530'))
-        # grabs updated wallet balance and staking weight
-        balance_post_send_one = self.nodes[0].getbalance()
-        staking_weight_post_send = self.nodes[0].getstakinginfo()["weight"]
+        # Check balances are correct on each node (balance should have moved to nodes 1 and 3)
+        assert_equal(self.nodes[0].getbalance(), BLOCK_REWARD)
+        assert(balance_before_send - 1 <= self.nodes[1].getbalance() <= balance_before_send)
+        assert_equal(self.nodes[2].getbalance(), 0)
+        assert(balance_before_send - 1 <= self.nodes[3].getbalance() <= balance_before_send)
 
-        """check balance decreased by just the fees"""
+        """test spending from wallet with only the spending key"""
 
-        # difference between balance after sending and previous balance is the same when block reward is removed
-        # values are converted to string and "00" is added to right of == operand because values must have equal num of
-        # decimals
-        assert(str(balance_post_send_one - BLOCK_REWARD) <= (str(float(balance_before_send) - MIN_COLDSTAKING_SENDING_FEE) + "00"))
+        balance_before_send_spending = self.nodes[1].getbalance()
+        node_0_address_spending = self.nodes[0].getnewaddress()
+        spending_txid = self.nodes[1].sendtoaddress(node_0_address_spending, SPEND_AMOUNT)
 
-        """check staking weight now == 0 (we don't hold the staking key)"""
+        self.nodes[1].generate(1)
+        self.sync_all()
 
-        # sent ~all funds to coldstaking address where we do not own the staking key hence our
-        # staking weight will be 0 as our recieved BLOCK_REWARD navcoin isn't mature enough to count towards
-        # our staking weight
-        assert((staking_weight_post_send / 100000000.0) - BLOCK_REWARD <= 1)
+        # Check the funds arrived at node 0
+        node_0_received = [n for n in self.nodes[0].listunspent(0) if n["address"] == node_0_address_spending]
+        assert(len(node_0_received) == 1)
+        assert_equal(spending_txid, node_0_received[0]["txid"])
+        assert(node_0_received[0]["confirmations"] == 1)
+        assert(node_0_received[0]["amount"] == SPEND_AMOUNT)
 
-        """test spending from a cold staking address with the spending key"""
+        # Send all remaining coins back to the cold staking address
+        self.nodes[1].sendtoaddress(coldstaking_address, self.nodes[1].getbalance(), "", "", "", True)
+        self.nodes[1].generate(1)
+        self.sync_all()
 
-        # send half of our balance to a third party address with sendtoaddress(), change sent to a newly generated change address
-        # hence coldstakingaddress should be empty after
-        # amount to be sent has to have 8 decimals
-        to_be_sent = round(float(balance_post_send_one) * float(0.5) - SENDING_FEE, 8)
-        self.nodes[0].sendtoaddress(address_Y_public_key, (to_be_sent))
-        # put transaction in new block & update blockchain
-        slow_gen(self.nodes[0], 1)
-        # wallet balance after sending
-        balance_post_send_two = self.nodes[0].getbalance()
-        #check balance will not be less than ~half our balance before sending - this
-        # will occurs if we send to an address we do not own
-        assert(balance_post_send_two - BLOCK_REWARD >= (float(balance_post_send_one) * float(0.5) - SENDING_FEE))
+        # Check the coldstaking balance is correct
+        assert(balance_before_send_spending - SPEND_AMOUNT - 1 <= self.nodes[1].getbalance() <= balance_before_send_spending - SPEND_AMOUNT)
+        assert_equal(self.nodes[1].getbalance(), self.nodes[3].getbalance())
 
-        """send funds back to coldstaking address, send raw tx from coldstaking address"""
+        """test spending from wallet with only the staking key"""
 
-        # resend to coldstaking, then re state listunspent_txs
-        self.nodes[0].sendtoaddress(coldstaking_address_spending, round(float(balance_post_send_two) - SENDING_FEE, 8))
-        slow_gen(self.nodes[0], 1)
-        listunspent_txs = [n for n in self.nodes[0].listunspent() if n["address"] == coldstaking_address_spending]
-        # send funds to a third party address using a signed raw transaction
-        # get unspent tx inputs
-        self.send_raw_transaction(decoded_raw_transaction = listunspent_txs[0], \
-        to_address = address_Y_public_key, \
-        change_address = coldstaking_address_spending, \
-        amount = float(str(float(listunspent_txs[0]["amount"]) - MIN_COLDSTAKING_SENDING_FEE) + "00")\
-        )
-        # put transaction in new block & update blockchain
-        slow_gen(self.nodes[0], 1)
-        # get new balance
-        balance_post_send_three = self.nodes[0].getbalance()
-        # we expect our balance to be zero
-        assert(balance_post_send_three - (BLOCK_REWARD * 2) == 0)
-        # put transaction in new block & update blockchain
-        slow_gen(self.nodes[0], 2)
-        # send our entire wallet balance - minimum fee required to coldstaking address
-        self.nodes[0].sendtoaddress(coldstaking_address_spending, float(str(float(self.nodes[0].getbalance()) - MIN_COLDSTAKING_SENDING_FEE) + "00"))
-        # put transaction in new block & update blockchain
-        slow_gen(self.nodes[0], 1)
-        # send to our spending address (should work)
-        send_worked = False
-        current_balance = self.nodes[0].getbalance()
+        node_0_address_staking = self.nodes[0].getnewaddress()
+        
         try:
-            #fails here - unsupported operand type(s) for *: 'decimal.decimal' and 'float'
-            self.nodes[0].sendtoaddress(spending_address_public_key, float(current_balance) * 0.5 - 1)
-            slow_gen(self.nodes[0], 1)
-            # our balance should be the same minus fees, as we own the address we sent to
-            assert(self.nodes[0].getbalance() >= current_balance - 1 + BLOCK_REWARD)
-            send_worked = True
+            staking_txid = self.nodes[2].sendtoaddress(node_0_address_staking, SPEND_AMOUNT)
+            staking_sent = True
         except Exception as e:
-            print(e)
+            staking_sent = False
+            print("Sending from Staking Failed: ", e)
 
-        assert(send_worked == True)
+        # Check the funds arrived at node 0
+        node_0_received = [n for n in self.nodes[0].listunspent(0) if n["address"] == node_0_address_staking]
+        assert(len(node_0_received) == 0)
 
-        slow_gen(self.nodes[0], 1)
+        # Confirm spending from node 2 failed
+        assert(staking_sent == False)
+        
+        """test spending from wallet with both the staking and spending keys"""
 
-        # send to our staking address
-        send_worked = False
-        current_balance = self.nodes[0].getbalance()
+        balance_before_send_both = self.nodes[3].getbalance()
+        node_0_address_both = self.nodes[0].getnewaddress()
+        
+        both_txid = self.nodes[3].sendtoaddress(node_0_address_both, SPEND_AMOUNT)
+    
+        self.nodes[3].generate(1)
+        self.sync_all()
 
-        try:
-            self.nodes[0].sendtoaddress(staking_address_public_key, float(self.nodes[0].getbalance()) * 0.5 - 1)
-            slow_gen(self.nodes[0], 1)
-            # our balance should be half minus fees, as we dont own the address we sent to
-            assert(self.nodes[0].getbalance() - BLOCK_REWARD <= float(current_balance) * 0.5 - 1 + 2)
-            send_worked = True
-        except Exception as e:
-            print(e)
+        # Check the funds arrived at node 0
+        node_0_received = [n for n in self.nodes[0].listunspent(0) if n["address"] == node_0_address_both]
+        assert(len(node_0_received) == 1)
+        assert_equal(both_txid, node_0_received[0]["txid"])
+        assert(node_0_received[0]["confirmations"] == 1)
+        assert(node_0_received[0]["amount"] == SPEND_AMOUNT)
 
-        assert(send_worked == True)
+        # Send all remaining coins back to the cold staking address
+        self.nodes[3].sendtoaddress(coldstaking_address, self.nodes[3].getbalance(), "", "", "", True)
+        self.nodes[3].generate(1)
+        self.sync_all()
 
-    def send_raw_transaction(self, decoded_raw_transaction, to_address, change_address, amount):
-        # create a raw tx
-        inputs = [{ "txid" : decoded_raw_transaction["txid"], "vout" : decoded_raw_transaction["vout"]}]
-        outputs = {to_address : amount}
-        rawtx = self.nodes[0].createrawtransaction(inputs, outputs)
-        # sign raw transaction
-        signresult = self.nodes[0].signrawtransaction(rawtx)
+        # Check the coldstaking balance is correct
+        assert(balance_before_send_both - SPEND_AMOUNT - 1 <= self.nodes[1].getbalance() <= balance_before_send_both - SPEND_AMOUNT)
+        assert_equal(self.nodes[1].getbalance(), self.nodes[3].getbalance())
+
+        """send raw tx from wallet with spending key"""
+
+        balance_before_send_raw_spending = self.nodes[1].getbalance()
+        node_0_address_raw_spending = self.nodes[0].getnewaddress()
+        spending_unspent = [n for n in self.nodes[1].listunspent(0) if n["address"] == coldstaking_address]
+
+        change_amount_spending = float(decimal.Decimal(spending_unspent[0]["amount"]) - decimal.Decimal(SPEND_AMOUNT) - decimal.Decimal(RAW_FEE))
+
+        inputs = [{ "txid" : spending_unspent[0]["txid"], "vout" : spending_unspent[0]["vout"]}]
+        outputs = {node_0_address_raw_spending : SPEND_AMOUNT, coldstaking_address: change_amount_spending}
+        rawtx = self.nodes[1].createrawtransaction(inputs, outputs)
+        signresult = self.nodes[1].signrawtransaction(rawtx)
         assert(signresult["complete"])
-        # send raw transaction
-        return self.nodes[0].sendrawtransaction(signresult['hex'])
 
+        spending_raw_txid = self.nodes[1].sendrawtransaction(signresult['hex'])
+
+        self.nodes[1].generate(1)
+        self.sync_all()
+
+        # Check the funds arrived at node 0
+        node_0_received = [n for n in self.nodes[0].listunspent(0) if n["address"] == node_0_address_raw_spending]
+        assert(len(node_0_received) == 1)
+        assert_equal(spending_raw_txid, node_0_received[0]["txid"])
+        assert(node_0_received[0]["confirmations"] == 1)
+        assert(node_0_received[0]["amount"] == SPEND_AMOUNT)
+
+        # Check the change remains in the cold staking address
+        assert_equal(float(self.nodes[1].getbalance()), change_amount_spending)
+        assert_equal(float(self.nodes[3].getbalance()), change_amount_spending)
+
+        """send raw tx from wallet with both keys"""
+
+        balance_before_send_raw_both = self.nodes[3].getbalance()
+        node_0_address_raw_both = self.nodes[0].getnewaddress()
+        both_unspent = [n for n in self.nodes[1].listunspent(0) if n["address"] == coldstaking_address]
+
+        change_amount_both = float(decimal.Decimal(balance_before_send_raw_both) - decimal.Decimal(SPEND_AMOUNT) - decimal.Decimal(RAW_FEE))
+
+        inputs = [{ "txid" : both_unspent[0]["txid"], "vout" : both_unspent[0]["vout"]}]
+        outputs = {node_0_address_raw_both : SPEND_AMOUNT, coldstaking_address: change_amount_both}
+        rawtx = self.nodes[3].createrawtransaction(inputs, outputs)
+        signresult = self.nodes[3].signrawtransaction(rawtx)
+        assert(signresult["complete"])
+
+        both_raw_txid = self.nodes[3].sendrawtransaction(signresult['hex'])
+
+        self.nodes[3].generate(1)
+        self.sync_all()
+
+        # Check the funds arrived at node 0
+        node_0_received = [n for n in self.nodes[0].listunspent(0) if n["address"] == node_0_address_raw_both]
+        assert(len(node_0_received) == 1)
+        assert_equal(both_raw_txid, node_0_received[0]["txid"])
+        assert(node_0_received[0]["confirmations"] == 1)
+        assert(node_0_received[0]["amount"] == SPEND_AMOUNT)
+        
+        # Check the change remains in the cold staking address
+        assert_equal(float(self.nodes[1].getbalance()), float(change_amount_both + BLOCK_REWARD))
+        assert_equal(float(self.nodes[3].getbalance()), change_amount_both)
+
+        """try to send raw tx from wallet with only the staking key"""
+
+        balance_before_send_raw_staking = self.nodes[1].getbalance()
+        node_0_address_raw_staking = self.nodes[0].getnewaddress()
+        staking_unspent = [n for n in self.nodes[1].listunspent(0) if n["address"] == coldstaking_address]
+
+        change_amount_staking = float(decimal.Decimal(staking_unspent[0]["amount"]) - decimal.Decimal(SPEND_AMOUNT) - decimal.Decimal(RAW_FEE))
+
+        inputs = [{ "txid" : staking_unspent[0]["txid"], "vout" : staking_unspent[0]["vout"]}]
+        outputs = {node_0_address_raw_staking : SPEND_AMOUNT, coldstaking_address: change_amount_staking}
+        
+        try:
+            rawtx = self.nodes[2].createrawtransaction(inputs, outputs)
+            signresult = self.nodes[2].signrawtransaction(rawtx)
+            both_raw_txid = self.nodes[2].sendrawtransaction(signresult['hex'])
+            staking_raw_sent = True
+        except Exception as e:
+            staking_raw_sent = False
+            print("Sending from Staking Raw Failed: ", e)
+        
+        # Check the funds arrived at node 0
+        node_0_received = [n for n in self.nodes[0].listunspent(0) if n["address"] == node_0_address_raw_staking]
+        assert(len(node_0_received) == 0)
+
+        # Confirm spending from node 2 failed
+        assert(staking_sent == False)
+        assert(self.nodes[1].getbalance() == balance_before_send_raw_staking)
 
 if __name__ == '__main__':
     ColdStakingSpending().main()
