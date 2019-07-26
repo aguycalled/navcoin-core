@@ -2602,9 +2602,9 @@ bool DisconnectBlock(const CBlock& block, CValidationState& state, const CBlockI
         if(!view.HaveProposal(pindex->vProposalVotes[i].first))
             continue;
 
-        LogPrintf("%s: modifying votes of proposal %s\n", __func__, proposal->hash.ToString());
-
         CProposalModifier proposal = view.ModifyProposal(pindex->vProposalVotes[i].first);
+
+        LogPrintf("%s: modifying votes of proposal %s\n", __func__, proposal->hash.ToString());
 
         if(vSeen.count(proposal->hash) == 0)
         {
