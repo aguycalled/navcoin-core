@@ -284,7 +284,7 @@ bool CCoinsViewCache::RemovePaymentRequest(const uint256 &prid) const {
     if (!HavePaymentRequest(prid))
         return false;
 
-    LogPrintf("%s: Removing prequest %s from coins view\n", __func__, pid.ToString());
+    LogPrintf("%s: Removing prequest %s from coins view\n", __func__, prid.ToString());
 
     cachePaymentRequests[prid] = CPaymentRequest();
     cachePaymentRequests[prid].SetNull();
