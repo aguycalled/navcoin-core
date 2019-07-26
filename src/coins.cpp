@@ -251,6 +251,7 @@ bool CCoinsViewCache::AddProposal(const CProposal& proposal) const {
     if (HaveProposal(proposal.hash))
         return false;
 
+    LogPrintf("%s: Adding proposal %s to coins view\n", __func__, proposal.hash.ToString());
     cacheProposals.insert(std::make_pair(proposal.hash, proposal));
 
     return true;
@@ -259,6 +260,8 @@ bool CCoinsViewCache::AddProposal(const CProposal& proposal) const {
 bool CCoinsViewCache::AddPaymentRequest(const CPaymentRequest& prequest) const {
     if (HavePaymentRequest(prequest.hash))
         return false;
+
+    LogPrintf("%s: Adding prequest %s to coins view\n", __func__, prequest.hash.ToString());
     cachePaymentRequests.insert(std::make_pair(prequest.hash, prequest));
     return true;
 }
@@ -266,6 +269,8 @@ bool CCoinsViewCache::AddPaymentRequest(const CPaymentRequest& prequest) const {
 bool CCoinsViewCache::RemoveProposal(const uint256 &pid) const {
     if (!HaveProposal(pid))
         return false;
+
+    LogPrintf("%s: Removing proposal %s from coins view\n", __func__, pid.ToString());
 
     cacheProposals[pid] = CProposal();
     cacheProposals[pid].SetNull();
@@ -278,6 +283,8 @@ bool CCoinsViewCache::RemoveProposal(const uint256 &pid) const {
 bool CCoinsViewCache::RemovePaymentRequest(const uint256 &prid) const {
     if (!HavePaymentRequest(prid))
         return false;
+
+    LogPrintf("%s: Removing prequest %s from coins view\n", __func__, pid.ToString());
 
     cachePaymentRequests[prid] = CPaymentRequest();
     cachePaymentRequests[prid].SetNull();

@@ -2602,6 +2602,8 @@ bool DisconnectBlock(const CBlock& block, CValidationState& state, const CBlockI
         if(!view.HaveProposal(pindex->vProposalVotes[i].first))
             continue;
 
+        LogPrintf("%s: modifying votes of proposal %s\n", __func__, proposal->hash.ToString());
+
         CProposalModifier proposal = view.ModifyProposal(pindex->vProposalVotes[i].first);
 
         if(vSeen.count(proposal->hash) == 0)
@@ -2623,6 +2625,8 @@ bool DisconnectBlock(const CBlock& block, CValidationState& state, const CBlockI
         CPaymentRequestModifier prequest = view.ModifyPaymentRequest(pindex->vPaymentRequestVotes[i].first);
         CFund::CProposal proposal;
 
+        LogPrintf("%s: trying to modify votes of prequest %s\n", __func__, prequest->hash.ToString());
+
         if(!view.GetProposal(prequest->proposalhash, proposal))
             continue;
 
@@ -2633,6 +2637,8 @@ bool DisconnectBlock(const CBlock& block, CValidationState& state, const CBlockI
 
         if(pindexblockparent == NULL)
             continue;
+
+        LogPrintf("%s: modifying votes of prequest %s\n", __func__, prequest->hash.ToString());
 
         if(vSeen.count(prequest->hash) == 0)
         {

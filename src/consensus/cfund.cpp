@@ -690,6 +690,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
             CProposalModifier proposal = view.ModifyProposal(it->first);
             proposal->nVotesYes = it->second.first;
             proposal->nVotesNo = it->second.second;
+            LogPrintf("%s %d: setting %s votes to %d and %d\n", __func__, __LINE__, proposal->hash.ToString(), proposal->nVotesYes, proposal->nVotesNo);
             vSeen[proposal->hash]=true;
         }
     }
@@ -701,6 +702,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
             CPaymentRequestModifier prequest = view.ModifyPaymentRequest(it->first);
             prequest->nVotesYes = it->second.first;
             prequest->nVotesNo = it->second.second;
+            LogPrintf("%s %d: setting %s votes to %d and %d\n", __func__, __LINE__, prequest->hash.ToString(), prequest->nVotesYes, prequest->nVotesNo);
             vSeen[prequest->hash]=true;
         }
     }
@@ -726,12 +728,14 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
 
             if(fUndo && prequest->paymenthash == pindexDelete->GetBlockHash())
             {
+                LogPrintf("%s %d: setting %s paymenthash null\n", __func__, __LINE__, prequest->hash.ToString());
                 prequest->paymenthash = uint256();
                 fUpdate = true;
             }
 
             if(fUndo && prequest->blockhash == pindexDelete->GetBlockHash())
             {
+                LogPrintf("%s %d: setting %s blockhash null\n", __func__, __LINE__, prequest->hash.ToString());
                 prequest->blockhash = uint256();
                 prequest->fState = CFund::NIL;
                 fUpdate = true;
@@ -764,6 +768,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
 
             if((prequest->fState == CFund::NIL || fUndo) && nVotingCycles != prequest->nVotingCycle)
             {
+                LogPrintf("%s %d: setting %s voting cycles to %d\n", __func__, __LINE__, prequest->hash.ToString(), nVotingCycles);
                 prequest->nVotingCycle = nVotingCycles;
                 fUpdate = true;
             }
@@ -773,6 +778,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
                 if((!prequest->IsExpired() && prequest->fState == CFund::EXPIRED) ||
                         (!prequest->IsRejected() && prequest->fState == CFund::REJECTED))
                 {
+                    LogPrintf("%s %d: setting %s blockhash null and state nil\n", __func__, __LINE__, prequest->hash.ToString());
                     prequest->fState = CFund::NIL;
                     prequest->blockhash = uint256();
                     fUpdate = true;
@@ -780,6 +786,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
 
                 if(!prequest->IsAccepted() && prequest->fState == CFund::ACCEPTED)
                 {
+                    LogPrintf("%s %d: setting %s blockhash null and state nil\n", __func__, __LINE__, prequest->hash.ToString());
                     prequest->fState = CFund::NIL;
                     prequest->blockhash = uint256();
                     fUpdate = true;
@@ -789,6 +796,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
                 {
                     if (prequest->fState != CFund::EXPIRED)
                     {
+                        LogPrintf("%s %d: setting %s blockhash and state expired\n", __func__, __LINE__, prequest->hash.ToString());
                         prequest->fState = CFund::EXPIRED;
                         prequest->blockhash = pindexNew->GetBlockHash();
                         fUpdate = true;
@@ -798,6 +806,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
                 {
                     if (prequest->fState != CFund::REJECTED)
                     {
+                        LogPrintf("%s %d: setting %s blockhash and state rejected\n", __func__, __LINE__, prequest->hash.ToString());
                         prequest->fState = CFund::REJECTED;
                         prequest->blockhash = pindexNew->GetBlockHash();
                         fUpdate = true;
@@ -809,6 +818,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
                     {
                         if(prequest->nAmount <= pindexNew->nCFLocked && prequest->nAmount <= proposal.GetAvailable(view))
                         {
+                            LogPrintf("%s %d: setting %s blockhash and state accepted\n", __func__, __LINE__, prequest->hash.ToString());
                             pindexNew->nCFLocked -= prequest->nAmount;
                             prequest->fState = CFund::ACCEPTED;
                             prequest->blockhash = pindexNew->GetBlockHash();
@@ -826,6 +836,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
             {
                 if (!vSeen.count(prequest->hash) && prequest->fState == CFund::NIL &&
                     !((proposal.fState == CFund::ACCEPTED || proposal.fState == CFund::PENDING_VOTING_PREQ) && prequest->IsAccepted())){
+                    LogPrintf("%s %d: setting %s votes to 0\n", __func__, __LINE__, prequest->hash.ToString());
                     prequest->nVotesYes = 0;
                     prequest->nVotesNo = 0;
                 }
@@ -863,7 +874,8 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
             }
 
             if(fUndo && proposal->blockhash == pindexDelete->GetBlockHash())
-            {
+            {                
+                LogPrintf("%s %d: setting %s blockhash null and state nil\n", __func__, __LINE__, proposal->hash.ToString());
                 proposal->blockhash = uint256();
                 proposal->fState = CFund::NIL;
                 fUpdate = true;
@@ -881,6 +893,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
 
             if((proposal->fState == CFund::NIL || fUndo) && nVotingCycles != proposal->nVotingCycle)
             {
+                LogPrintf("%s %d: setting %s voting cycles to %d\n", __func__, __LINE__, proposal->hash.ToString(), nVotingCycles);
                 proposal->nVotingCycle = nVotingCycles;
                 fUpdate = true;
             }
@@ -890,6 +903,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
                 if((!proposal->IsExpired(pindexNew->GetBlockTime()) && (proposal->fState == CFund::EXPIRED || proposal->fState == CFund::PENDING_VOTING_PREQ)) ||
                    (!proposal->IsRejected() && proposal->fState == CFund::REJECTED))
                 {
+                    LogPrintf("%s %d: setting %s blockhash null and state nil\n", __func__, __LINE__, proposal->hash.ToString());
                     proposal->fState = CFund::NIL;
                     proposal->blockhash = uint256();
                     fUpdate = true;
@@ -897,6 +911,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
 
                 if(!proposal->IsAccepted() && (proposal->fState == CFund::ACCEPTED || proposal->fState == CFund::PENDING_FUNDS))
                 {
+                    LogPrintf("%s %d: setting %s blockhash null and state nil\n", __func__, __LINE__, proposal->hash.ToString());
                     proposal->fState = CFund::NIL;
                     proposal->blockhash = uint256();
                     fUpdate = true;
@@ -908,6 +923,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
                     {
                         if (proposal->HasPendingPaymentRequests(view))
                         {
+                            LogPrintf("%s %d: setting %s state pending voting preq\n", __func__, __LINE__, proposal->hash.ToString());
                             proposal->fState = CFund::PENDING_VOTING_PREQ;
                             fUpdate = true;
                         }
@@ -918,6 +934,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
                                 pindexNew->nCFSupply += proposal->GetAvailable(view);
                                 pindexNew->nCFLocked -= proposal->GetAvailable(view);
                             }
+                            LogPrintf("%s %d: setting %s state expired and blockhash\n", __func__, __LINE__, proposal->hash.ToString());
                             proposal->fState = CFund::EXPIRED;
                             proposal->blockhash = pindexNew->GetBlockHash();
                             fUpdate = true;
@@ -928,6 +945,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
                 {
                     if(proposal->fState != CFund::REJECTED)
                     {
+                        LogPrintf("%s %d: setting %s state rejected and blockhash\n", __func__, __LINE__, proposal->hash.ToString());
                         proposal->fState = CFund::REJECTED;
                         proposal->blockhash = pindexNew->GetBlockHash();
                         fUpdate = true;
@@ -938,6 +956,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
                     {
                         if(pindexNew->nCFSupply >= proposal->GetAvailable(view))
                         {
+                            LogPrintf("%s %d: setting %s state accepted and blockhash\n", __func__, __LINE__, proposal->hash.ToString());
                             pindexNew->nCFSupply -= proposal->GetAvailable(view);
                             pindexNew->nCFLocked += proposal->GetAvailable(view);
                             proposal->fState = CFund::ACCEPTED;
@@ -946,6 +965,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
                         }
                         else if(proposal->fState != CFund::PENDING_FUNDS)
                         {
+                            LogPrintf("%s %d: setting %s state pending funds and blockhash null\n", __func__, __LINE__, proposal->hash.ToString());
                             proposal->fState = CFund::PENDING_FUNDS;
                             proposal->blockhash = uint256();
                             fUpdate = true;
@@ -961,6 +981,7 @@ void CFund::CFundStep(const CValidationState& state, CBlockIndex *pindexNew, con
             {
                 if (!vSeen.count(proposal->hash) && proposal->fState == CFund::NIL)
                 {
+                    LogPrintf("%s %d: setting %s reseting votes\n", __func__, __LINE__, proposal->hash.ToString());
                     proposal->nVotesYes = 0;
                     proposal->nVotesNo = 0;
                 }

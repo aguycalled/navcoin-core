@@ -11,6 +11,7 @@
 #include "tinyformat.h"
 #include "univalue/include/univalue.h"
 #include "uint256.h"
+#include "util.h"
 
 using namespace std;
 
@@ -71,6 +72,8 @@ public:
     CPaymentRequest() { SetNull(); }
 
     void SetNull() {
+        if (hash != uint256())
+            LogPrintf("%s: setting %s null\n", __func__, hash.ToString());
         nAmount = 0;
         fState = NIL;
         nVotesYes = 0;
@@ -209,6 +212,8 @@ public:
     CProposal() { SetNull(); }
 
     void SetNull() {
+        if (hash != uint256())
+            LogPrintf("%s: setting %s null\n", __func__, hash.ToString());
         nAmount = 0;
         nFee = 0;
         Address = "";
