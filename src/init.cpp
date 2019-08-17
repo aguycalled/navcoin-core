@@ -1671,7 +1671,8 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                         {
                             pcoinsTip->AddProposal(it);
                         }
-                        pcoinsTip->Flush();
+                        if (!pcoinsTip->Flush())
+                            return AbortNode(state, "Failed to write to coin database");
                         pblocktree->WriteFlag("proposals_migrated", true);
                     }
                 }
@@ -1689,7 +1690,8 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                         {
                             pcoinsTip->AddPaymentRequest(it);
                         }
-                        pcoinsTip->Flush();
+                        if (!pcoinsTip->Flush())
+                            return AbortNode(state, "Failed to write to coin database");
                         pblocktree->WriteFlag("prequests_migrated", true);
                     }
                 }
