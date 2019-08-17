@@ -1663,8 +1663,9 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 
                 if (pblocktree->GetProposalIndex(vProposals))
                 {
-                    bool fMigrated = true;
-                    if (!pblocktree->ReadFlag("proposals_migrated", fMigrated) || !fMigrated)
+                    CProposalMap mapProposals;
+                    pcoinsTip->GetAllProposals(mapProposals);
+                    if (vProposals.size() > 0 && mapProposals.size() == 0)
                     {
                         LogPrintf("Importing %d proposals to the new CoinsDB...\n", vProposals.size());
                         for (auto& it: vProposals)
@@ -1676,7 +1677,6 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                             strLoadError = _("Failed to write to coin database");
                             break;
                         }
-                        pblocktree->WriteFlag("proposals_migrated", true);
                     }
                 }
 
@@ -1684,11 +1684,11 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 
                 if (pblocktree->GetPaymentRequestIndex(vPaymentRequests))
                 {
-                    bool fMigrated = true;
-                    if (!pblocktree->ReadFlag("prequests_migrated", fMigrated) || !fMigrated)
+                    CPaymentRequestMap mapPaymentRequest;
+                    pcoinsTip->GetAllPaymentRequests(mapPaymentRequest);
+                    if (vPaymentRequests.size() > 0 && mapPaymentRequest.size() == 0)
                     {
                         LogPrintf("Importing %d payment requests to the new CoinsDB...\n", vPaymentRequests.size());
-                        std::vector<std::pair<uint256, CFund::CPaymentRequest>> vToRemove;
                         for (auto& it: vPaymentRequests)
                         {
                             pcoinsTip->AddPaymentRequest(it);
@@ -1698,7 +1698,6 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                             strLoadError = _("Failed to write to coin database");
                             break;
                         }
-                        pblocktree->WriteFlag("prequests_migrated", true);
                     }
                 }
 
