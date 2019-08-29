@@ -19,6 +19,22 @@
 #include "hash_impl.h"
 #include "scratch_impl.h"
 
+#ifdef ENABLE_MODULE_GENERATOR
+# include "include/secp256k1_generator.h"
+#endif
+
+#ifdef ENABLE_MODULE_COMMITMENT
+# include "include/secp256k1_commitment.h"
+#endif
+
+#ifdef ENABLE_MODULE_RANGEPROOF
+# include "include/secp256k1_rangeproof.h"
+#endif
+
+#ifdef ENABLE_MODULE_BULLETPROOF
+# include "include/secp256k1_bulletproofs.h"
+#endif
+
 #define ARG_CHECK(cond) do { \
     if (EXPECT(!(cond), 0)) { \
         secp256k1_callback_call(&ctx->illegal_callback, #cond); \
@@ -333,6 +349,27 @@ static SECP256K1_INLINE void buffer_append(unsigned char *buf, unsigned int *off
     *offset += len;
 }
 
+/* This nonce function is described in BIP-schnorr
+ * (https://github.com/sipa/bips/blob/bip-schnorr/bip-schnorr.mediawiki) */
+static int secp256k1_nonce_function_bipschnorr(unsigned char *nonce32, const unsigned char *msg32, const unsigned char *key32, const unsigned char *algo16, void *data, unsigned int counter) {
+    secp256k1_sha256 sha;
+    (void) data;
+    (void) counter;
+    VERIFY_CHECK(counter == 0);
+
+    /* Hash x||msg as per the spec */
+    secp256k1_sha256_initialize(&sha);
+    secp256k1_sha256_write(&sha, key32, 32);
+    secp256k1_sha256_write(&sha, msg32, 32);
+    /* Hash in algorithm, which is not in the spec, but may be critical to
+     * users depending on it to avoid nonce reuse across algorithms. */
+    if (algo16 != NULL) {
+        secp256k1_sha256_write(&sha, algo16, 16);
+    }
+    secp256k1_sha256_finalize(&sha, nonce32);
+    return 1;
+}
+
 static int nonce_function_rfc6979(unsigned char *nonce32, const unsigned char *msg32, const unsigned char *key32, const unsigned char *algo16, void *data, unsigned int counter) {
    unsigned char keydata[112];
    unsigned int offset = 0;
@@ -570,9 +607,9 @@ int secp256k1_ec_pubkey_tweak_mul(const secp256k1_context* ctx, secp256k1_pubkey
 
 int secp256k1_context_randomize(secp256k1_context* ctx, const unsigned char *seed32) {
     VERIFY_CHECK(ctx != NULL);
-    if (secp256k1_ecmult_gen_context_is_built(&ctx->ecmult_gen_ctx)) {
-        secp256k1_ecmult_gen_blind(&ctx->ecmult_gen_ctx, seed32);
-    }
+    CHECK(ctx != secp256k1_context_no_precomp);
+    ARG_CHECK(secp256k1_ecmult_gen_context_is_built(&ctx->ecmult_gen_ctx));
+    secp256k1_ecmult_gen_blind(&ctx->ecmult_gen_ctx, seed32);
     return 1;
 }
 
@@ -604,6 +641,38 @@ int secp256k1_ec_pubkey_combine(const secp256k1_context* ctx, secp256k1_pubkey *
 # include "modules/ecdh/main_impl.h"
 #endif
 
+#ifdef ENABLE_MODULE_SCHNORRSIG
+# include "modules/schnorrsig/main_impl.h"
+#endif
+
+#ifdef ENABLE_MODULE_MUSIG
+# include "modules/musig/main_impl.h"
+#endif
+
 #ifdef ENABLE_MODULE_RECOVERY
 # include "modules/recovery/main_impl.h"
+#endif
+
+#ifdef ENABLE_MODULE_GENERATOR
+# include "modules/generator/main_impl.h"
+#endif
+
+#ifdef ENABLE_MODULE_COMMITMENT
+# include "modules/commitment/main_impl.h"
+#endif
+
+#ifdef ENABLE_MODULE_RANGEPROOF
+# include "modules/rangeproof/main_impl.h"
+#endif
+
+#ifdef ENABLE_MODULE_BULLETPROOF
+# include "modules/bulletproofs/main_impl.h"
+#endif
+
+#ifdef ENABLE_MODULE_WHITELIST
+# include "modules/whitelist/main_impl.h"
+#endif
+
+#ifdef ENABLE_MODULE_SURJECTIONPROOF
+# include "modules/surjection/main_impl.h"
 #endif
