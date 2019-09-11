@@ -21,8 +21,6 @@ NAVCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BDB_CPPFLAGS) $(BOOST_CPPFLAG
 NAVCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
 NAVCOIN_INCLUDES += $(UNIVALUE_CFLAGS)
 
-BLS_LIBS=-lbls -lgmp
-
 LIBNAVCOIN_SERVER=libnavcoin_server.a
 LIBNAVCOIN_COMMON=libnavcoin_common.a
 LIBNAVCOIN_CONSENSUS=libnavcoin_consensus.a
@@ -424,7 +422,7 @@ navcoind_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-navcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(UNBOUND_LIBS) $(CURL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS) $(BLS_LIBS)
+navcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(UNBOUND_LIBS) $(CURL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
 # navcoin-cli binary #
 navcoin_cli_SOURCES = navcoin-cli.cpp
@@ -442,7 +440,7 @@ navcoin_cli_LDADD = \
   $(LIBNAVCOIN_UTIL) \
   $(LIBNAVCOIN_CRYPTO)
 
-navcoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(UNBOUND_LIBS) $(CURL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS) $(BLS_LIBS)
+navcoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(UNBOUND_LIBS) $(CURL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
 # navcoin-tx binary #
@@ -463,7 +461,7 @@ navcoin_tx_LDADD = \
   $(LIBNAVCOIN_CRYPTO) \
   $(LIBSECP256K1)
 
-navcoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS) $(BLS_LIBS)
+navcoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
 
 # navcoinconsensus library #
