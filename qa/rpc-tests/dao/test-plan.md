@@ -1,6 +1,6 @@
 # NavCoin DAO Test Plan
 
-This file is a map of the tests scenarios which will be covered to ensure the DAO is fully tested before release. This is currently a work in progress, so if you notice there are missing scenarios please add them to this file following the same format/template. If you want to create a test based on a scenario here then please go ahead and claim it. Just make sure you claim and check off any scenarios which you write so others are aware of what is still todo.
+This file is a map of the tests scenarios which will be covered to ensure the DAO is fully tested before release. This is currently a work in progress, so if you notice there are missing scenarios please add them to this file following the same format/template. If you want to author a test based on a scenario here then please go ahead and claim it. Just make sure you claim and check off any scenarios which you write so others are aware of what is still todo.
 
 ## Scenarios
 
@@ -12,7 +12,7 @@ This file is a map of the tests scenarios which will be covered to ensure the DA
 | Author      | - |
 | Satus       | Ready |
 | Description | It should pass a consultation with included answers |
-| File        | `./dao-001-pass-with-included.py`
+| File        | `./001-pass-with-included-answers.py`
 
 1. **Given** I have created a consultation with included answers
 2. **When** I support the consultation and vote for an answer
@@ -33,7 +33,7 @@ This file is a map of the tests scenarios which will be covered to ensure the DA
 | Author      | - |
 | Satus       | Ready |
 | Description | It should pass a consultation with proposed answers |
-| File        | `./dao-002-pass-with-proposed.py`
+| File        | `./002-pass-with-proposed-answers.py`
 
 1. **Given** I have created a consultation without answers
 2. **When** I support propose answers for the consultation and vote for an answer

@@ -189,8 +189,9 @@ testScripts = [
     'stakeimmaturebalance.py',
     'rpc-help.py',
     'dao-consultations.py',
-    'dao-consultation-consensus.py',
-    'createrawscriptaddress.py'
+    'dao-consultation-consensus.py'
+    'createrawscriptaddress.py',
+    'dao/001-pass-with-included-answers.py',
 ]
 #if ENABLE_ZMQ:
 #    testScripts.append('zmq_test.py')
