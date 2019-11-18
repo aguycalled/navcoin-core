@@ -1831,7 +1831,7 @@ bool GetAddressUnspent(uint160 addressHash, int type,
 }
 
 /** Return transaction in tx, and if it was found inside a block, its hash is placed in hashBlock */
-bool GetTransaction(const uint256 &hash, CTransaction &txOut, const Consensus::Params& consensusParams, uint256 &hashBlock, bool fAllowSlow)
+bool GetTransaction(const uint256 &hash, CTransaction &txOut, const Consensus::Params& consensusParams, uint256 &hashBlock, const CCoinsViewCache& view, bool fAllowSlow)
 {
 
     CBlockIndex *pindexSlow = nullptr;
@@ -1869,7 +1869,6 @@ bool GetTransaction(const uint256 &hash, CTransaction &txOut, const Consensus::P
     if (fAllowSlow) { // use coin database to locate block that contains transaction, and scan it
         int nHeight = -1;
         {
-            const CCoinsViewCache& view = *pcoinsTip;
             const CCoins* coins = view.AccessCoins(hash);
             if (coins)
                 nHeight = coins->nHeight;
@@ -2263,7 +2262,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                 uint256 hashBlock = uint256();
                 int valid = 1;
 
-                if (!GetTransaction(prevout.hash, txPrev, Params().GetConsensus(), hashBlock, true))
+                if (!GetTransaction(prevout.hash, txPrev, Params().GetConsensus(), hashBlock, inputs, true))
                    valid = 0;
 
                 if (mapBlockIndex.count(hashBlock) == 0)
@@ -3528,7 +3527,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     {
         // ppcoin: coin stake tx earns reward instead of paying fee
         uint64_t nCoinAge;
-        if (!TransactionGetCoinAge(const_cast<CTransaction&>(block.vtx[1]), nCoinAge))
+        if (!TransactionGetCoinAge(const_cast<CTransaction&>(block.vtx[1]), nCoinAge, view))
             return error("ConnectBlock() : %s unable to get coin age for coinstake", block.vtx[1].GetHash().ToString());
 
         int64_t nCalculatedStakeReward = GetProofOfStakeReward(pindex->nHeight, nCoinAge, nFees, pindex->pprev);
@@ -8367,7 +8366,7 @@ arith_uint256 GetProofOfStakeLimit(int nHeight)
     return (bnProofOfStakeLimitV2);
 }
 
-bool TransactionGetCoinAge(CTransaction& transaction, uint64_t& nCoinAge)
+bool TransactionGetCoinAge(CTransaction& transaction, uint64_t& nCoinAge, const CCoinsViewCache& view)
 {
     arith_uint256 bnCentSecond = 0;  // coin age in the unit of cent-seconds
     nCoinAge = 0;
@@ -8381,7 +8380,7 @@ bool TransactionGetCoinAge(CTransaction& transaction, uint64_t& nCoinAge)
         CTransaction txPrev;
         uint256 hashBlock = uint256();
 
-        if (!GetTransaction(txin.prevout.hash, txPrev, Params().GetConsensus(), hashBlock, true))
+        if (!GetTransaction(txin.prevout.hash, txPrev, Params().GetConsensus(), hashBlock, view, true))
             continue;  // previous transaction not in main chain
 
         if (transaction.nTime < txPrev.nTime)
@@ -8685,7 +8684,7 @@ bool CheckProofOfStake(CBlockIndex* pindexPrev, const CTransaction& tx, unsigned
 
     CTransaction txPrev;
     uint256 hashBlock = uint256();
-    if (!GetTransaction(txin.prevout.hash, txPrev, Params().GetConsensus(), hashBlock, true))
+    if (!GetTransaction(txin.prevout.hash, txPrev, Params().GetConsensus(), hashBlock, view, true))
         return error("%s: INFO: read txPrev failed %s",__func__, txin.prevout.hash.GetHex());  // previous transaction not in main chain, may occur during initial download
 
     bool fColdStaking = txPrev.vout[txin.prevout.n].scriptPubKey.IsColdStaking();
@@ -8698,7 +8697,7 @@ bool CheckProofOfStake(CBlockIndex* pindexPrev, const CTransaction& tx, unsigned
         {
             CTransaction txPrev_;
             uint256 hashBlock_ = uint256();
-            if (!GetTransaction(tx.vin[i].prevout.hash, txPrev_, Params().GetConsensus(), hashBlock_, true))
+            if (!GetTransaction(tx.vin[i].prevout.hash, txPrev_, Params().GetConsensus(), hashBlock_, view, true))
                 return error("%s: INFO: read txPrev failed %s",__func__, tx.vin[i].prevout.hash.GetHex());  // previous transaction not in main chain, may occur during initial download
 
             fColdStaking |= txPrev_.vout[tx.vin[i].prevout.n].scriptPubKey.IsColdStaking();
@@ -8768,13 +8767,13 @@ bool CheckCoinStakeTimestamp(int nHeight, int64_t nTimeBlock, int64_t nTimeTx)
         return (nTimeBlock == nTimeTx);
 }
 
-bool CheckKernel(CBlockIndex* pindexPrev, unsigned int nBits, int64_t nTime, const COutPoint& prevout, int64_t* pBlockTime)
+bool CheckKernel(CBlockIndex* pindexPrev, unsigned int nBits, int64_t nTime, const COutPoint& prevout, const CCoinsViewCache& view, int64_t* pBlockTime)
 {
     arith_uint256 hashProofOfStake, targetProofOfStake;
 
     CTransaction txPrev;
     uint256 hashBlock = uint256();
-    if (!GetTransaction(prevout.hash, txPrev, Params().GetConsensus(), hashBlock, true)){
+    if (!GetTransaction(prevout.hash, txPrev, Params().GetConsensus(), hashBlock, view, true)){
         LogPrintf("CheckKernel : Could not find previous transaction %s\n",prevout.hash.ToString());
         return false;
     }
