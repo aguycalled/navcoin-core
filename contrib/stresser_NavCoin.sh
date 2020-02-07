@@ -1,5 +1,9 @@
 #!/bin/bash 
 
+# This is a stresser for bash environment. The purpose of the stresser is to test NavCoin wallet functions by
+# creating lots of random transactions of all types such as community fund proposals and consultations and 
+# checking if everything is working as expected.
+
 # NOTE: OSX users may need to install gshuf and substitude all shuf with gshuf.
 
 ### Need to configure this!!
