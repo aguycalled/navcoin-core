@@ -836,7 +836,7 @@ function voter_dice_consultation {
 
 function check_consensus_parameters {
 	consensusparameter_tmp=($(nav_cli $1 getconsensusparameters | tr -d "[],\n"))
-	if [ -n ${consensusparameter_tmp[0]} ];
+	if [ "${#consensusparameter_tmp[@]}" -gt 10 ];
 	then
 		copy_array consensusparameter_tmp consensusparameter_new
 	fi
