@@ -243,12 +243,12 @@ function create_random_network_topology {
                         array_network_connection_pool+=("${local_array_create_random_network_topology[$j]} ${local_array_create_random_network_topology[$k]}")
                 done
         done
-	if [ "${#local_array_create_random_network_topology[@]}" -lt 100 ];
-	then
-		network_density_upper_bound=$( echo $(echo "e(1.4*l(${#local_array_create_random_network_topology[@]}-1))" | bc -l)/1 | bc )
-	elif [ "${#local_array_create_random_network_topology[@]}" -eq 1 ];
+	if [ "${#local_array_create_random_network_topology[@]}" -eq 1 ];
 	then
 		network_density_upper_bound=1
+	elif [ "${#local_array_create_random_network_topology[@]}" -lt 100 ];
+	then
+		network_density_upper_bound=$( echo $(echo "e(1.4*l(${#local_array_create_random_network_topology[@]}-1))" | bc -l)/1 | bc )
 	else
 		network_density_upper_bound=$( echo "${#local_array_create_random_network_topology[@]}*8" | bc )
 	fi
