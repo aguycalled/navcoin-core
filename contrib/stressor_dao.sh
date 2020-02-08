@@ -518,6 +518,7 @@ function assert_state {
 		fi
 	fi
 	echo State hash check OK!
+	bool_assert_state_mismatch=0
 }
 
 function random_transactions {
