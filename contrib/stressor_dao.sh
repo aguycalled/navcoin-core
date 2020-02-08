@@ -85,7 +85,6 @@ function initialize_network {
 	array_data=()
 	array_user=()
 	array_pwd=()
-	consensus_parameter_name=("Length in blocks of a voting cycle" "Minimum of support needed for starting a range consultation" "Minimum of support needed for a consultation answer proposal" "Earliest cycle when a consultation can get in confirmation phase" "Length in cycles for consultation votings" "Maximum of voting cycles for a consultation to gain support" "Length in cycles for the reflection phase of consultations" "Minimum fee to submit a consultation" "Minimum fee to submit a consultation answer proposal" "Minimum of quorum for fund proposal votings" "Minimum of positive votes for a fund proposal to be accepted" "Minimum of negative votes for a fund proposal to be rejected" "Minimum fee to submit a fund proposal" "Maximum of voting cycles for fund proposal votings" "Minimum of quorum for payment request votings" "Minimum of positive votes for a payment request to be accepted" "Minimum of negative votes for a payment request to be rejected" "Minimum fee to submit a payment request" "Maximum of voting cycles for fund proposal votings" "Frequency of the fund accumulation transaction" "Percentage of generated NAV going to the Fund" "Amount of NAV generated per block" "Yearly fee for registering a name in NavNS" "Minimum fee as a fund contribution to submit a DAO vote using a light wallet")
 }
 
 function initialize_node {
@@ -471,7 +470,7 @@ function wait_until_sync {
 #		echo best block hash of node $i:
 #		echo "$(nav_cli $i getbestblockhash)"
 	done
-	if [ $(printf "%s\000" "${local_array_best_hash[@]}" | LC_CTYPE=C sort -z -u | uniq | grep -n -c .) -gt 1 ];
+	if [ $(printf "%s\n" "${local_array_best_hash[@]}" | LC_CTYPE=C sort -z -u | uniq | grep -n -c .) -gt 1 ];
 	then
 		echo best block hash mismatch!!!
 #		echo array topoloy node pairs is "${array_topology_node_pairs[@]}"
@@ -496,7 +495,7 @@ function assert_state {
 	do
 		local_array_statehash[$i]=$(nav_cli $i getcfunddbstatehash)
 	done
-	if [ $(printf "%s\000" "${local_array_statehash[@]}" | LC_CTYPE=C sort -z -u | uniq | grep -n -c .) -gt 1  ];
+	if [ $(printf "%s\n" "${local_array_statehash[@]}" | LC_CTYPE=C sort -z -u | uniq | grep -n -c .) -gt 1  ];
 	then
 		if [ "$bool_assert_state_mismatch" != 1 ];
 		then
@@ -1068,6 +1067,11 @@ echo Checking state hashes match
 
 assert_state "${array_active_nodes[@]}"
 
+consensus_parameter_count=$(nav_cli 0 getconsensusparameters | jq length)
+for i in $(seq 0 1 $( bc <<< "$consensus_parameter_count - 1" ));
+do
+	eval "consensus_parameter_name[\$i]=\$(nav_cli 0 \"getconsensusparameters true\" | jq -r '.[] | select(.id==$i) | .desc')"
+done
 consensusparameter_old=($(nav_cli 0 getconsensusparameters | tr -d "[],\n"))
 consensusparameter_original=("${consensusparameter_old[@]}")
 voting_cycle_length=${consensusparameter_old[0]}
@@ -1161,10 +1165,9 @@ while [ $wait_until_cycle -gt $this_cycle ]; do
 				connect_network "${array_topology_node_pairs[@]}"
 				echo "Created topology that has ${#array_topology_node_pairs[@]} connections out of max connections ${#array_network_connection_pool[@]} in the network"
 			fi	
-			
+			echo array topoloy node pairs is "${array_topology_node_pairs[@]}" with index "${!array_topology_node_pairs[@]}"
+			echo array topology node pairs stopped is "${array_topology_node_pairs_stopped[@]}" with index "${!array_topology_node_pairs_stopped[@]}"
 		fi
-		echo array topoloy node pairs is "${array_topology_node_pairs[@]}" with index "${!array_topology_node_pairs[@]}"
-		echo array topology node pairs stopped is "${array_topology_node_pairs_stopped[@]}" with index "${!array_topology_node_pairs_stopped[@]}"
 	fi
 	
 	if [ "$bool_sync_new_node" == 1 ];
