@@ -483,7 +483,16 @@ function wait_until_sync {
 		node=${shuffled_array[0]}
 		$(nav_cli $node "generate 1")
 		echo now on blcok $(nav_cli $node "getblockcount")
-		connect_network "${array_topology_node_pairs[@]}"
+		if [ "$network_split_started" == 1 ];
+		then
+			for wusi in $(seq 0 1 $( bc <<< "$network_count-1" ));
+			do
+				echo running added commands
+				eval "connect_network \"\${array_topology_node_pairs_network$nc[@]}\""
+			done
+		else
+			connect_network "${array_topology_node_pairs[@]}"
+		fi
 		sleep 2
 		wait_until_sync "${local_array[@]}"
 	fi
@@ -1249,6 +1258,7 @@ then
 	echo Waiting 30 sec for navcoind...
 	sleep 30
 	echo Splitting the network into $network_count sub networks...
+	network_split_started=1
 	counter=0
 	for i in ${array_stressing_nodes[@]};
 	do
