@@ -513,8 +513,17 @@ function assert_state {
 		then
 			echo STATE HASH MISMATCH! Syncing again to make sure best block hashes match.
 			bool_assert_state_mismatch=1
-			wait_until_sync "${array_active_nodes[@]}"
-			assert_state
+			if [ "$network_split_started" == 1 ];
+			then
+				for as in $(seq 0 1 $( bc <<< "$network_count-1" ));
+				do
+					eval "wait_until_sync \"\${array_all_nodes_network$as[@]}\""
+					eval "assert_state \"\${array_all_nodes_network$as[@]}\""
+				done
+			else
+				wait_until_sync "${array_active_nodes[@]}"
+				assert_state "${array_active_nodes[@]}"
+			fi
 		else
 			echo STATE HASH MISMATCH!
 			for i in ${!local_array_statehash[@]};
