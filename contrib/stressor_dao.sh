@@ -192,6 +192,10 @@ function shuffle_array {
 #Establish topology using set variable $network_topology
 function connect_network {
 	local local_array=("$@")
+	if [ "${#local_array[@]}" -lt 1 ];
+	then
+		return
+	fi
 	for i in ${!local_array[@]};
 	do
 		local connection_pair=(${local_array[$i]})
@@ -232,10 +236,13 @@ function check_connection {
 }
 
 function create_random_network_topology {
-
 	unset array_topology_node_pairs
 	local local_array_create_random_network_topology=("$@")
-        array_network_connection_pool=()
+	if [ "${#local_array_create_random_network_topology[@]}" -eq 1 ];
+	then
+		return
+	fi
+	array_network_connection_pool=()
         for j in $(seq 0 1 $( bc <<< "${#local_array_create_random_network_topology[@]}-2" ));
         do
                 for k in $(seq $( bc <<< "$j+1" ) 1 $( bc <<< "${#local_array_create_random_network_topology[@]}-1" ));
@@ -246,19 +253,11 @@ function create_random_network_topology {
 	if [ "${#local_array_create_random_network_topology[@]}" -lt 100 ];
 	then
 		network_density_upper_bound=$( echo $(echo "e(1.4*l(${#local_array_create_random_network_topology[@]}-1))" | bc -l)/1 | bc )
-	elif [ "${#local_array_create_random_network_topology[@]}" -eq 1 ];
-	then
-		network_density_upper_bound=1
 	else
 		network_density_upper_bound=$( echo "${#local_array_create_random_network_topology[@]}*8" | bc )
 	fi
 	#network_denstiy is used to create a somewhat loosely connect network topology
-	if [ "${#local_array_create_random_network_topology[@]}" -eq 1 ];
-	then
-		network_density_lower_bound=1
-	else
-		network_density_lower_bound=$( echo "${#local_array_create_random_network_topology[@]} - 1" | bc )
-	fi
+	network_density_lower_bound=$( echo "${#local_array_create_random_network_topology[@]} - 1" | bc )
         network_density=$( shuf -i $network_density_lower_bound-$network_density_upper_bound -n 1 )
 	array_topology_index=($(shuf -i 0-$( bc <<< "${#array_network_connection_pool[@]} - 1") -n $network_density))
 	for i in $(seq 0 1 $( bc <<< "$network_density-1" ));
@@ -1180,6 +1179,7 @@ while [ $wait_until_cycle -gt $this_cycle ]; do
 		dice=$( bc <<< "$RANDOM % 10" )
 		if [ "$dice" == 0 ];
 		then
+			echo Initializing a new node to test syncing from genesis...
 			shuffle_array "${array_active_nodes[@]}"
 			node=${shuffled_array[0]}
 			((node_count++))
@@ -1188,7 +1188,6 @@ while [ $wait_until_cycle -gt $this_cycle ]; do
 			initialize_node $node_count
 			echo Waiting 30 sec for navcoind...
 			sleep 30
-			echo Node counts are now $node_count
 			connect_network "${array_topology_node_pairs[@]}"
 			sleep 30
 			wait_until_sync "${array_active_nodes[@]}"
@@ -1206,9 +1205,7 @@ while [ $wait_until_cycle -gt $this_cycle ]; do
 					unset array_topology_node_pairs[$i]
 				fi
 			done
-			echo array topology node pairs is now: ${array_topology_node_pairs[@]}
 			((node_count--))
-			echo Node counts are now $node_count
 		fi
 	fi
 	cycles_left=$(bc <<< "$wait_until_cycle - $this_cycle")
