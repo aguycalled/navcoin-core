@@ -487,7 +487,7 @@ function wait_until_sync {
 		then
 			for wusi in $(seq 0 1 $( bc <<< "$network_count-1" ));
 			do
-				echo running added commands
+				echo Syncing network $wusi...
 				eval "connect_network \"\${array_topology_node_pairs_network$nc[@]}\""
 			done
 		else
