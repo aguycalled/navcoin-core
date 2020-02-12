@@ -652,7 +652,7 @@ function dice_consultation {
 		consensus=$( bc <<< "$RANDOM % 24" )
 		case $consensus in
 			"0")
-				value=$( shuf -i 5-30 -n 1)
+				value=$( shuf -i 5-20 -n 1)
 				;;
 			"1" | "2" | "19" )
 				value=$(echo "$( shuf -i 15-500 -n 1)0")
@@ -698,9 +698,9 @@ function dice_consultation {
 						then
 							case $i in
 								"0")
-									value=$( shuf -i 5-30 -n 1)
+									value=$( shuf -i 5-20 -n 1)
 									;;
-								"1" | "2")
+								"1" | "2" | "19" )
 									value=$(echo "$( shuf -i 15-500 -n 1)0")
 									;;
 								"3" | "4" | "5" | "6" | "13" | "18")
