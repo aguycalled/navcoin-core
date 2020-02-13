@@ -218,6 +218,7 @@ function disconnect_network {
 #Checks if topology is correctly connected
 function check_connection {
 	local array=("$@")
+	check_connection_done=0
 	for i in ${!array[@]};
 	do
 		local connection_pair=(${array[$i]})
@@ -232,7 +233,11 @@ function check_connection {
 			break
 		fi
 	done
-	echo "All nodes are connected!"
+	if [ "$check_connection_done" == 0 ];
+	then
+		echo "All nodes are connected!"
+		check_connection_done=1
+	fi
 }
 
 function create_random_network_topology {
@@ -472,6 +477,7 @@ function wait_until_sync {
 	sleep 5
 	local local_array=("$@")
 	local local_array_best_hash=()
+	wait_until_sync_done=0
 	for i in ${local_array[@]};
 	do
 		local_array_best_hash[$i]=$(nav_cli $i getbestblockhash)
@@ -501,7 +507,11 @@ function wait_until_sync {
 		sleep 2
 		wait_until_sync "${local_array[@]}"
 	fi
-	echo Best block hashes matched!
+	if [ "$wait_until_sync_done" == 0 ];
+	then
+		echo Best block hashes matched!
+		wait_until_sync_done=1
+	fi
 }
 
 function assert_state {
