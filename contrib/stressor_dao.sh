@@ -404,6 +404,7 @@ function check_stopping_nodes_cause_network_split {
 }
 
 function start_random_stopped_nodes {
+	local local_array=()
 	if [ ${#array_stopped_nodes[@]} == 0 ];
 	then
 		echo "All nodes are already active."
@@ -413,11 +414,18 @@ function start_random_stopped_nodes {
 			dice=$( bc <<< "$RANDOM % 2" )
 			if [ "$dice" -eq 1 ];
 			then
+				local_array[$i]=$i
 				start_stopped_node $i
-				connect_node_to_network $i
 			else
 				echo skipping starting node $i
 			fi
+		done
+		echo Waiting 30 seconds for navcoind...
+		sleep 30
+		for j in ${!local_array[@]};
+		do
+			connect_node_to_network $j
+			echo "Nodes $j balance: $(nav_cli $j getbalance) tNAV"
 		done
 	fi
 	echo Currently active nodes are: ${array_active_nodes[@]} inactive ones are: ${array_stopped_nodes[@]}
@@ -433,9 +441,6 @@ function start_stopped_node {
 		array_stressing_nodes[$1]=${array_stopped_stressing_nodes[$1]}
 		unset array_stopped_stressing_nodes[$1]
 	fi
-	echo Waiting 30 seconds for navcoind...
-	sleep 30
-	echo "Nodes $1 balance: $(nav_cli $1 getbalance) tNAV" 
 }
 
 function connect_node_to_network {
@@ -513,17 +518,8 @@ function assert_state {
 		then
 			echo STATE HASH MISMATCH! Syncing again to make sure best block hashes match.
 			bool_assert_state_mismatch=1
-			if [ "$network_split_started" == 1 ];
-			then
-				for as in $(seq 0 1 $( bc <<< "$network_count-1" ));
-				do
-					eval "wait_until_sync \"\${array_all_nodes_network$as[@]}\""
-					eval "assert_state \"\${array_all_nodes_network$as[@]}\""
-				done
-			else
-				wait_until_sync "${array_active_nodes[@]}"
-				assert_state "${array_active_nodes[@]}"
-			fi
+			wait_until_sync "${local_array[@]}"
+			assert_state "${local_array[@]}"
 		else
 			echo STATE HASH MISMATCH!
 			for i in ${!local_array_statehash[@]};
