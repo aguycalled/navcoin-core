@@ -201,7 +201,7 @@ function connect_network {
 		local connection_pair=(${local_array[$i]})
 		out=$(connect_nodes ${connection_pair[0]} ${connection_pair[1]})
 	done
-	sleep 5
+	sleep 1
 	check_connection "${local_array[@]}"
 }
 
@@ -515,7 +515,7 @@ function wait_until_sync {
 }
 
 function assert_state {
-	sleep 5
+	sleep 1
 	local local_array=("$@")
 	local local_array_statehash=()
 	for i in ${local_array[@]};
