@@ -99,6 +99,9 @@ function initialize_node {
 	array_user[$1]=$(env LC_CTYPE=C tr -dc "a-zA-Z0-9-_\$\?" < /dev/urandom | head -c 10)
 	array_pwd[$1]=$(env LC_CTYPE=C tr -dc "a-zA-Z0-9-_\$\?" < /dev/urandom | head -c 10)
 	echo "DATADIR_$1 = ${array_data[$1]}"
+	echo "USER = ${array_user[$1]}"
+	echo "PWD = ${array_pwd[$1]}"
+	echo "RPC PORT = ${array_rpc_port[$1]}"
 	start_node $1
 	array_active_nodes[$1]=$1
 	array_all_nodes[$1]=$1
