@@ -1,10 +1,33 @@
 #!/bin/bash 
 
-# This is a stresser for bash environment. The purpose of the stresser is to test NavCoin wallet functions by
-# creating lots of random transactions of all types such as community fund proposals and consultations and 
-# checking if everything is working as expected.
 
-# NOTE: OSX users may need to install gshuf and substitude all shuf with gshuf.
+# The stressor_dao.sh under contrib folder serves the purpose of testing the network behavior 
+# under extreme load of random transactions, proposals, payment requests, consultations, and 
+# consensus changes. Blocks are being mined through proof of stake process so this script 
+# usually takes hours to finish depending on the setup. Tests that are included are:
+# 
+# 	1. Create random transactions
+# 	2. Create and vote on random proposals
+# 	3. Create and vote on random payment requests
+# 	4. Create and vote on random range consultations
+# 	5. Create and vote on random answer consultations
+# 	6. Create and vote on random consensus parameter changes
+# 	7. Propose random new answers to consultations and parameter changes
+# 	8. Perform random verifychain checks to simulate network reorg back to genesis
+# 	9. Randomly turn off nodes and then turn them back on
+# 	10. Randomly boot up a fresh node to test syncing from genesis block
+# 	11. Randomly create new network topologies to loosely connect the nodes
+# 	12. Split the network down into user defined number of subnetworks and perform tests
+# 	    1-5, re-combine all subnetworks afterwards into 1 to see if all networks follow
+# 	    the longest chain correctly
+# 	13. Final verifychain check back to genesis
+# 
+# The stressor has been run on network size up to 64 nodes and 8 sub networks for up to 200
+# block cycles (a block cycle is around 10-30 blocks). Script passed without issues for more
+# than 25 times to date(2020/02/18).
+
+
+# NOTE: This stresser is written in bash(4.4) environment. OSX users may need to install gshuf and substitude all shuf with gshuf.
 
 ### Need to configure this!!
 
