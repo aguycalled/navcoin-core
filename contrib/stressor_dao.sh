@@ -1,10 +1,10 @@
 #!/bin/bash 
 
 
-# The stressor_dao.sh under contrib folder serves the purpose of testing the network behavior 
-# under extreme load of random transactions, proposals, payment requests, consultations, and 
-# consensus changes. Blocks are being mined through proof of stake process so this script 
-# usually takes hours to finish depending on the setup. Tests that are included are:
+# This file serves the purpose of testing the network behavior under extreme load of
+# random transactions, proposals, payment requests, consultations, and consensus changes.
+# Blocks are being mined through proof of stake process so this script usually takes hours 
+# to finish depending on the setup. Tests that are included are:
 # 
 # 	1. Create random transactions
 # 	2. Create and vote on random proposals
@@ -388,9 +388,9 @@ function stop_selected_nodes {
 		fi
 		array_stopped_nodes[$i]=$i
 	done
-	echo Currently active nodes are: ${array_active_nodes[@]} inactive ones are: ${array_stopped_nodes[@]}
-	echo array topology node pairs is ${array_topology_node_pairs[@]}
-	echo array topology node pairs stopped is ${array_topology_node_pairs_stopped[@]} with size of ${#array_topology_node_pairs_stopped[@]}
+#	echo Currently active nodes are: ${array_active_nodes[@]} inactive ones are: ${array_stopped_nodes[@]}
+#	echo array topology node pairs is ${array_topology_node_pairs[@]}
+#	echo array topology node pairs stopped is ${array_topology_node_pairs_stopped[@]} with size of ${#array_topology_node_pairs_stopped[@]}
 
 }
 
@@ -562,7 +562,6 @@ function assert_state {
 			do
 				echo the hashes of nodes $i are ${local_array_statehash[$i]}
 			done
-			echo I wrote listproposals output to ./devnet./listproposals.out in ${array_data[@]}
 			terminate 1
 		fi
 	fi
@@ -1192,7 +1191,7 @@ while [ $wait_until_cycle -gt $this_cycle ]; do
 	fi
 	if [ "$bool_random_new_topology" == 1 ];
 	then
-		dice=$( bc <<< "$RANDOM % 4" )
+		dice=$( bc <<< "$RANDOM % 10" )
 		if [ "$dice" == 1 ];
 		then
 	
@@ -1270,7 +1269,7 @@ while [ $wait_until_cycle -gt $this_cycle ]; do
 	echo Consensus Parameter Change Proposed: $(nav_cli $node listconsultations  | jq ".[].version" | grep 13 | wc -l)
 	echo Conenesus Parameter Origianl: ${consensusparameter_original[@]}
 	echo Current consensus parameters: ${consensusparameter_new[@]}
-	echo Currently active nodes are: ${array_active_nodes[@]} inactive ones are: ${array_stopped_nodes[@]}
+	echo Active nodes: ${array_active_nodes[@]} Inactive nodes: ${array_stopped_nodes[@]}
 #	for j in $(seq 0 1 $( bc <<< "$node_count-1"));
 #	do
 #		echo Reorganizations Node $j: $(prev=0;for i in $(grep height= ${array_data[$j]}/devnet/debug.log|sed -n -e '/height\='$previous_block'/,$p'|sed -n 's/.*height\=\([0-9]*\) .*/\1/p'); do if [ $i -lt $prev ]; then echo $i; fi; prev=$i; done)
