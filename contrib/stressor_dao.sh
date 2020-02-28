@@ -1003,7 +1003,7 @@ function random_verifychain_check {
 }
 
 function start_node {
-        $(echo $navpath)/navcoind -datadir=${array_data[$1]} -port=${array_p2p_port[$1]} -rpcport=${array_rpc_port[$1]} -rpcuser=${array_user[$1]} -rpcpassword=${array_pwd[$1]} -devnet -daemon -debug=dao -debug=statehash -ntpminmeasures=0 -staking=0 2> /dev/null
+        $(echo $navpath)/navcoind -datadir=${array_data[$1]} -port=${array_p2p_port[$1]} -rpcport=${array_rpc_port[$1]} -rpcuser=${array_user[$1]} -rpcpassword=${array_pwd[$1]} -devnet -daemon -debug=dao -debug=statehash -ntpminmeasures=0 -dandelion=0 -staking=0 2> /dev/null
 }
 
 function stop_node {
