@@ -103,8 +103,6 @@ class LightVotingTest(NavCoinTestFramework):
         start_new_cycle(self.nodes[0])
         start_new_cycle(self.nodes[0])
 
-        print(self.nodes[0].getconsultation(consultation_hash)['status'])
-
         vote_str_a = '6a' + 'cb' + 'ca' + '20' + reversed_hash_a
         voterm_str_a = '6a' + 'cb' + 'c8' + '20' + reversed_hash_a
 
