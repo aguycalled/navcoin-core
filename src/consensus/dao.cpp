@@ -327,6 +327,8 @@ bool VoteStep(const CValidationState& state, CBlockIndex *pindexNew, const bool 
     if (fUndo)
     {
         pindexDelete = pindexNew;
+        if (!pindexNew->pprev)
+            return true;
         pindexNew = pindexNew->pprev;
         assert(pindexNew);
     }
