@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 
 # This file serves the purpose of testing the network behavior under extreme load of
@@ -32,7 +32,7 @@
 ### Need to configure this!!
 
 ### Path to binaries
-navpath=./src
+navpath=../src
 
 ### How many voting cycles to run the stresser
 cycles=10
@@ -41,7 +41,10 @@ cycles=10
 node_count=8
 
 ### Number of nodes to be creating proposals, consultations, and  voting.
-stressing_node_count=6
+stressing_node_count=8
+
+### Number of nodes to be intilized with excludevote so the staked blocks won't be counted in the quorum.
+node_count_excludevote=4
 
 ### If manual selection of stressing nodes is preferred, specify below, or leave it an empty array. If specified, node count must match stressing_node_count
 array_stressing_nodes=()
@@ -122,7 +125,6 @@ function initialize_node {
 	array_user[$1]=$(env LC_CTYPE=C tr -dc "a-zA-Z0-9-_\$\?" < /dev/urandom | head -c 10)
 	array_pwd[$1]=$(env LC_CTYPE=C tr -dc "a-zA-Z0-9-_\$\?" < /dev/urandom | head -c 10)
 	echo "-datadir=${array_data[$1]} -rpcport=${array_rpc_port[$1]}"
-	start_node $1
 	array_active_nodes[$1]=$1
 	array_all_nodes[$1]=$1
 }
@@ -1006,6 +1008,10 @@ function start_node {
         $(echo $navpath)/navcoind -datadir=${array_data[$1]} -port=${array_p2p_port[$1]} -rpcport=${array_rpc_port[$1]} -devnet -daemon -debug=dao -debug=statehash -ntpminmeasures=0 -dandelion=0 -disablesafemode -staking=0 2> /dev/null
 }
 
+function start_node_excludevote {
+        $(echo $navpath)/navcoind -datadir=${array_data[$1]} -port=${array_p2p_port[$1]} -rpcport=${array_rpc_port[$1]} -devnet -daemon -debug=dao -debug=statehash -ntpminmeasures=0 -dandelion=0 -disablesafemode -staking=0 -excludevote=1 2> /dev/null
+}
+
 function stop_node {
 	out=$(nav_cli $1 stop)
 }
@@ -1019,7 +1025,20 @@ do
 	initialize_node $i
 done
 
+for i in $(seq 0 1 $( bc <<< "$node_count-$node_count_excludevote-1" ));
+do
+	echo "starting node $i"
+	start_node $i
+done
+
+for i in $(seq $( bc <<< "$node_count-$node_count_excludevote" ) 1 $( bc <<< "$node_count-1" ));
+do
+	echo "starting node $i with exclude vote"
+	start_node_excludevote $i
+done
+
 echo ''
+
 echo Waiting 30 seconds for navcoind...
 
 #Sleep to let navoind boot up, on slower systems the value may need to be much higher
