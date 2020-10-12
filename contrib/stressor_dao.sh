@@ -37,13 +37,13 @@ navpath=../src
 ### How many voting cycles to run the stresser
 cycles=10
 
-### Number of nodes to start. (Setting node_count=1 will overwrite settings for stressing_node_count, array_stressing_nodes, array_verifychain_nodes)
+### Total number of total nodes in the network. (Setting node_count=1 will overwrite settings for stressing_node_count, array_stressing_nodes, array_verifychain_nodes)
 node_count=8
 
-### Number of nodes to be creating proposals, consultations, and  voting.
+### Number of nodes out of total node count to be creating proposals, consultations, and voting.
 stressing_node_count=8
 
-### Number of nodes to be intilized with excludevote so the staked blocks won't be counted in the quorum.
+### Number of nodes oiut of total node count to be intilized with excludevote so the staked blocks won't be counted in the quorum.
 node_count_excludevote=4
 
 ### If manual selection of stressing nodes is preferred, specify below, or leave it an empty array. If specified, node count must match stressing_node_count
