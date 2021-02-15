@@ -229,7 +229,7 @@ endif
 
 dist_noinst_SCRIPTS = autogen.sh
 
-EXTRA_DIST = $(top_srcdir)/share/genbuild.sh test/pull-tester/rpc-tests.py test/rpc-tests $(DIST_DOCS) $(WINDOWS_PACKAGING) $(OSX_PACKAGING) $(BIN_CHECKS) src/bls src/mcl
+EXTRA_DIST = $(top_srcdir)/share/genbuild.sh test/pull-tester/rpc-tests.py test/rpc-tests $(DIST_DOCS) $(WINDOWS_PACKAGING) $(OSX_PACKAGING) $(BIN_CHECKS) src/bls
 
 CLEANFILES = $(OSX_DMG) $(NAVCOIN_WIN_INSTALLER)
 
