@@ -1,0 +1,25 @@
+--- a/common.mk	2021-02-01 19:08:38.000000000 +0100
++++ b/common.mk	2021-02-15 20:00:42.000000000 +0100
+@@ -20,16 +20,16 @@
+     OS=mac-m1
+   endif
+   LIB_SUF=dylib
+-  OPENSSL_DIR?=/usr/local/opt/openssl
+-  CFLAGS+=-I$(OPENSSL_DIR)/include
+-  LDFLAGS+=-L$(OPENSSL_DIR)/lib
+-  GMP_DIR?=/usr/local/opt/gmp
+-  CFLAGS+=-I$(GMP_DIR)/include
+-  LDFLAGS+=-L$(GMP_DIR)/lib
+   NASM_ELF_OPT=-fmacho64
+ else
+   LIB_SUF=so
+ endif
++OPENSSL_DIR?=/usr/local/opt/openssl
++CFLAGS+=-I$(OPENSSL_DIR)/include
++LDFLAGS+=-L$(OPENSSL_DIR)/lib
++GMP_DIR?=/usr/local/opt/gmp
++CFLAGS+=-I$(GMP_DIR)/include
++LDFLAGS+=-L$(GMP_DIR)/lib
+ ifeq ($(UNAME_S),OpenBSD)
+   OS=openbsd
+   CXX?=clang++
