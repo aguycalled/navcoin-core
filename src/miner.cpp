@@ -427,6 +427,7 @@ CBlockTemplate* BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bo
     pblock->vtx[0].nTime   = pblock->nTime;
     pblock->nBits          = GetNextTargetRequired(pindexPrev, fProofOfStake);
     pblock->nNonce         = GetBoolArg("-excludevote", false) ? 1 : 0;
+    pblock->nNonce        |= ComputeBlockNonce(pindexPrev, chainparams.GetConsensus());
     pblocktemplate->vTxSigOpsCost[0] = WITNESS_SCALE_FACTOR * GetLegacySigOpCount(pblock->vtx[0]);
 
     if (pFees)
@@ -1150,7 +1151,7 @@ bool SignBlock(CBlock *pblock, CWallet& wallet, int64_t nFees, std::string sLog)
                                       nCycles++;
                                   if (nCycles >= 10)
                                   {
-                                      pblock->nNonce = 1;
+                                      pblock->nNonce |= 1;
                                       break;
                                   }
                                   fFound = false;

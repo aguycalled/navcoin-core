@@ -544,6 +544,7 @@ bool IsCommunityFundAmountV2Enabled(const CBlockIndex* pindexPrev, const Consens
 bool IsVoteCacheStateEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
 bool IsDAOEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
 bool IsDaoConsensusEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
+bool IsV61Enabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
 
 /** Check whether the static reward has been activated **/
 bool IsStaticRewardEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
@@ -618,6 +619,8 @@ extern VersionBitsCache versionbitscache;
  * Determine what nVersion a new block should use.
  */
 int32_t ComputeBlockVersion(const CBlockIndex* pindexPrev, const Consensus::Params& params);
+int32_t ComputeBlockNonce(const CBlockIndex* pindexPrev, const Consensus::Params& params);
+int32_t ComputeRequiredBlockNonce(const CBlockIndex* pindexPrev, const Consensus::Params& params);
 
 /** Reject codes greater or equal to this can be returned by AcceptToMemPool
  * for transactions, to signal internal conditions. They cannot and should not

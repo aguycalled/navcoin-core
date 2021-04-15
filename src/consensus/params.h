@@ -36,6 +36,7 @@ enum DeploymentPos
     DEPLOYMENT_POOL_FEE,
     DEPLOYMENT_BLSCT,
     DEPLOYMENT_EXCLUDE,
+    DEPLOYMENT_V6_1,
     MAX_VERSION_BITS_DEPLOYMENTS
 };
 
@@ -59,7 +60,8 @@ static std::string sDeploymentsDesc[Consensus::MAX_VERSION_BITS_DEPLOYMENTS] = {
     "Enables the decision over consensus parameters using distributed voting",
     "Allows staking pools to charge a fee",
     "Activates the privacy protocol blsCT and the private token xNAV",
-    "Excludes inactive voters from the DAO quorums"
+    "Excludes inactive voters from the DAO quorums",
+    "Consensus changes for Navcoin v6.1 protocol update"
 };
 
 /**

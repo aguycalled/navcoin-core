@@ -3190,6 +3190,37 @@ int32_t ComputeBlockVersion(const CBlockIndex* pindexPrev, const Consensus::Para
     return nVersion;
 }
 
+int32_t ComputeBlockNonce(const CBlockIndex* pindexPrev, const Consensus::Params& params)
+{
+    LOCK(cs_main);
+    int32_t nNonce = 0;
+
+    for (int i = 33; i < (int)Consensus::MAX_VERSION_BITS_DEPLOYMENTS; i++) {
+        ThresholdState state = VersionBitsState(pindexPrev, params, (Consensus::DeploymentPos)i, versionbitscache);
+        if ((state == THRESHOLD_LOCKED_IN || state == THRESHOLD_ACTIVE  ||
+             (state == THRESHOLD_STARTED && !IsVersionBitRejected(params, (Consensus::DeploymentPos)i)))) {
+            nNonce |= VersionBitsMask(params, (Consensus::DeploymentPos)i);
+        }
+    }
+
+    return nNonce;
+}
+
+int32_t ComputeRequiredBlockNonce(const CBlockIndex* pindexPrev, const Consensus::Params& params)
+{
+    LOCK(cs_main);
+    int32_t nNonce = 0;
+
+    for (int i = 0; i < (int)Consensus::MAX_VERSION_BITS_DEPLOYMENTS; i++) {
+        ThresholdState state = VersionBitsState(pindexPrev, params, (Consensus::DeploymentPos)i, versionbitscache);
+        if (state == THRESHOLD_ACTIVE) {
+            nNonce |= VersionBitsMask(params, (Consensus::DeploymentPos)i);
+        }
+    }
+
+    return nNonce;
+}
+
 static bool IsSigHFEnabled(const Consensus::Params &consensus, int64_t nMedianTimePast) {
     return nMedianTimePast >=
            consensus.sigActivationTime;
@@ -3221,7 +3252,11 @@ public:
 
     bool Condition(const CBlockIndex* pindex, const Consensus::Params& params) const
     {
-        return  (pindex->nVersion & VERSIONBITS_TOP_MASK) == (IsSigHFEnabled(Params().GetConsensus(), pindex) ? VERSIONBITS_TOP_BITS_SIG : VERSIONBITS_TOP_BITS) &&
+        if (bit > 32)
+            return ((pindex->nNonce >> (bit-32)) & 1) != 0 &&
+                    ((ComputeBlockNonce(pindex->pprev, params) >> (bit-32)) & 1) == 0;
+        else
+            return  (pindex->nVersion & VERSIONBITS_TOP_MASK) == (IsSigHFEnabled(Params().GetConsensus(), pindex) ? VERSIONBITS_TOP_BITS_SIG : VERSIONBITS_TOP_BITS) &&
                ((pindex->nVersion >> bit) & 1) != 0 &&
                ((ComputeBlockVersion(pindex->pprev, params) >> bit) & 1) == 0;
     }
@@ -5878,6 +5913,12 @@ bool IsDAOEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params
     return (VersionBitsState(pindexPrev, params, Consensus::DEPLOYMENT_CONSULTATIONS, versionbitscache) == THRESHOLD_ACTIVE);
 }
 
+bool IsV61Enabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
+{
+    LOCK(cs_main);
+    return (VersionBitsState(pindexPrev, params, Consensus::DEPLOYMENT_V6_1, versionbitscache) == THRESHOLD_ACTIVE);
+}
+
 bool IsColdStakingPoolFeeEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
 {
     LOCK(cs_main);
@@ -6034,6 +6075,12 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
     if((block.nVersion & nDAOVersionMask) != nDAOVersionMask && IsDAOEnabled(pindexPrev,Params().GetConsensus()))
         return state.Invalid(false, REJECT_OBSOLETE, strprintf("bad-version(0x%08x)", block.nVersion),
                          "rejected no consultations block");
+
+    auto nRequiredNonce = ComputeRequiredBlockNonce(pindexPrev, Params().GetConsensus());
+
+    if ((block.nNonce & nRequiredNonce) != nRequiredNonce)
+        return state.Invalid(false, REJECT_OBSOLETE, strprintf("bad-nonce(0x%08x)", block.nNonce),
+                         "rejected outdated nonce");
 
 #if CLIENT_BUILD_IS_TEST_RELEASE
     bool fTestnet = GetBoolArg("-testnet", true);

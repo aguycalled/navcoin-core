@@ -732,6 +732,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_EXCLUDE].nStartTime =1602343915; // oct 10th, 2020
         consensus.vDeployments[Consensus::DEPLOYMENT_EXCLUDE].nTimeout = 1633879915; // oct 10th, 2021
 
+        // Deployment test for nonce voting
+        consensus.vDeployments[Consensus::DEPLOYMENT_V6_1].bit = 33;
+        consensus.vDeployments[Consensus::DEPLOYMENT_V6_1].nStartTime = 1577836800; // Jan 1st, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_V6_1].nTimeout = 1640995200; // Jun 1st, 2022
+
         /**
          * The message start string is designed to be unlikely to occur in normal data.
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
