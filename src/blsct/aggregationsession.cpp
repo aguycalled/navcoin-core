@@ -6,6 +6,7 @@
 #include <main.h>
 
 std::set<uint256> setKnownSessions;
+std::set<uint256> setKnownCandidates;
 CCriticalSection cs_aggregation;
 CCriticalSection cs_sessionKeys;
 
@@ -82,7 +83,7 @@ bool AggregationSession::IsKnown(const AggregationSession& ms)
 
 bool AggregationSession::IsKnown(const EncryptedCandidateTransaction& ec)
 {
-    return setKnownSessions.find(SerializeHash(ec)) != setKnownSessions.end();
+    return setKnownCandidates.find(SerializeHash(ec)) != setKnownCandidates.end();
 }
 
 void AggregationSession::Stop()
@@ -331,10 +332,10 @@ bool AggregationSession::NewEncryptedCandidateTransaction(std::shared_ptr<Encryp
     if (!(pwalletMain->GetPrivateBalance() > 0))
         return false;
 
-    if (setKnownSessions.size() > GetArg("-defaultmixin", DEFAULT_TX_MIXCOINS)*100*100)
-        setKnownSessions.clear();
+    if (setKnownCandidates.size() > GetArg("-defaultmixin", DEFAULT_TX_MIXCOINS)*100*1000)
+        setKnownCandidates.clear();
 
-    setKnownSessions.insert(SerializeHash(*etx));
+    setKnownCandidates.insert(SerializeHash(*etx));
 
     candidatesQueue.push(etx);
 
@@ -415,6 +416,9 @@ bool static IntRecv(char* data, size_t len, int timeout, SOCKET& hSocket)
 
 bool AggregationSession::Join()
 {
+    if (setKnownSessions.size() > GetArg("-defaultmixin", DEFAULT_TX_MIXCOINS)*100*1000)
+        setKnownSessions.clear();
+
     setKnownSessions.insert(this->GetHash());
 
     if (!IsBLSCTEnabled(chainActive.Tip(),Params().GetConsensus()))
@@ -423,11 +427,8 @@ bool AggregationSession::Join()
     if (!pwalletMain)
         return false;
 
-    {
-        LOCK(pwalletMain->cs_wallet);
-        if (*(pwalletMain->aggSession) == *this)
-            return false;
-    }
+    if (*(pwalletMain->aggSession) == *this)
+        return false;
 
     if (!GetBoolArg("-blsctmix", DEFAULT_MIX))
         return false;
@@ -440,24 +441,15 @@ bool AggregationSession::Join()
 
     LogPrint("aggregationsession","AggregationSession::%s: new session %s\n", __func__, GetHiddenService());
 
-    std::vector<COutput> vAvailableCoins;
-
-    pwalletMain->AvailablePrivateCoins(vAvailableCoins, true, nullptr, false, DEFAULT_MIN_OUTPUT_AMOUNT);
-
-    if (vAvailableCoins.size() == 0)
-        return false;
-
-    std::random_shuffle(vAvailableCoins.begin(), vAvailableCoins.end(), GetRandInt);
-
     if (nVersion == 1)
     {
-        joinThread = boost::thread(boost::bind(&AggregationSession::JoinThread, GetHiddenService(), vAvailableCoins, inputs));
+        joinThread = boost::thread(boost::bind(&AggregationSession::JoinThread, GetHiddenService(), inputs));
 
         joinThread.detach();
     }
     else if (nVersion == 2)
     {
-        joinThread = boost::thread(boost::bind(&AggregationSession::JoinThreadV2, vPublicKey, vAvailableCoins, inputs));
+        joinThread = boost::thread(boost::bind(&AggregationSession::JoinThreadV2, vPublicKey, inputs));
 
         joinThread.detach();
     }
@@ -612,9 +604,18 @@ bool AggregationSession::BuildCandidateTransaction(const CWalletTx *prevcoin, co
     return true;
 }
 
-bool AggregationSession::JoinSingleV2(int index, std::vector<unsigned char> &vPublicKey, const std::vector<COutput> &vAvailableCoins, const CStateViewCache* inputs)
+bool AggregationSession::JoinSingleV2(int index, std::vector<unsigned char> &vPublicKey, const CStateViewCache* inputs)
 {
     int nRand = 3+GetRandInt(3);
+
+    std::vector<COutput> vAvailableCoins;
+
+    pwalletMain->AvailablePrivateCoins(vAvailableCoins, true, nullptr, false, DEFAULT_MIN_OUTPUT_AMOUNT);
+
+    if (vAvailableCoins.size() == 0)
+        return false;
+
+    std::random_shuffle(vAvailableCoins.begin(), vAvailableCoins.end(), GetRandInt);
 
     if (GetRandInt(nRand+vAvailableCoins.size()) < nRand || index >= vAvailableCoins.size())
     {
@@ -659,9 +660,19 @@ bool AggregationSession::JoinSingleV2(int index, std::vector<unsigned char> &vPu
     return true;
 }
 
-bool AggregationSession::JoinSingle(int index, const std::string &hiddenService, const std::vector<COutput> &vAvailableCoins, const CStateViewCache* inputs)
+bool AggregationSession::JoinSingle(int index, const std::string &hiddenService, const CStateViewCache* inputs)
 {
     int nRand = 3+GetRandInt(3);
+
+    std::vector<COutput> vAvailableCoins;
+
+    pwalletMain->AvailablePrivateCoins(vAvailableCoins, true, nullptr, false, DEFAULT_MIN_OUTPUT_AMOUNT);
+
+    if (vAvailableCoins.size() == 0)
+        return false;
+
+    std::random_shuffle(vAvailableCoins.begin(), vAvailableCoins.end(), GetRandInt);
+
 
     if (GetRandInt(nRand+vAvailableCoins.size()) < nRand || index >= vAvailableCoins.size())
     {
@@ -899,10 +910,8 @@ bool AggregationSession::JoinSingle(int index, const std::string &hiddenService,
     return false;
 }
 
-bool AggregationSession::JoinThreadV2(const std::vector<unsigned char> &vPublicKey, const std::vector<COutput> &vAvailableCoins, const CStateViewCache* inputs)
+bool AggregationSession::JoinThreadV2(const std::vector<unsigned char> &vPublicKey, const CStateViewCache* inputs)
 {
-    auto nThreads = std::min((int)vAvailableCoins.size(), 10);
-
     if (AggregationSession::fJoining)
         return true;
 
@@ -910,9 +919,9 @@ bool AggregationSession::JoinThreadV2(const std::vector<unsigned char> &vPublicK
 
     boost::thread_group sessionsThreadGroup;
 
-    for (unsigned int i = 0; i < nThreads; i++)
+    for (unsigned int i = 0; i < 10; i++)
     {
-        sessionsThreadGroup.create_thread(boost::bind(&AggregationSession::JoinSingleV2, i, vPublicKey, vAvailableCoins, inputs));
+        sessionsThreadGroup.create_thread(boost::bind(&AggregationSession::JoinSingleV2, i, vPublicKey, inputs));
     }
 
     sessionsThreadGroup.join_all();
@@ -924,15 +933,13 @@ bool AggregationSession::JoinThreadV2(const std::vector<unsigned char> &vPublicK
     return true;
 }
 
-bool AggregationSession::JoinThread(const std::string &hiddenService, const std::vector<COutput> &vAvailableCoins, const CStateViewCache* inputs)
+bool AggregationSession::JoinThread(const std::string &hiddenService, const CStateViewCache* inputs)
 {
-    auto nThreads = std::min((int)vAvailableCoins.size(), 10);
-
     boost::thread_group sessionsThreadGroup;
 
-    for (unsigned int i = 0; i < nThreads; i++)
+    for (unsigned int i = 0; i < 10; i++)
     {
-        sessionsThreadGroup.create_thread(boost::bind(&AggregationSession::JoinSingle, i, hiddenService, vAvailableCoins, inputs));
+        sessionsThreadGroup.create_thread(boost::bind(&AggregationSession::JoinSingle, i, hiddenService, inputs));
     }
 
     sessionsThreadGroup.join_all();
@@ -1124,3 +1131,4 @@ void CandidateVerificationThread()
         return;
     }
 }
+

@@ -81,10 +81,10 @@ public:
     }
 
     bool Join();
-    static bool JoinSingle(int index, const std::string &hiddenService, const std::vector<COutput> &vAvailableCoins, const CStateViewCache* inputs);
-    static bool JoinThread(const std::string &hiddenService, const std::vector<COutput> &vAvailableCoins, const CStateViewCache* inputs);
-    static bool JoinSingleV2(int index, std::vector<unsigned char> &vPublicKey, const std::vector<COutput> &vAvailableCoins, const CStateViewCache* inputs);
-    static bool JoinThreadV2(const std::vector<unsigned char> &vPublicKey, const std::vector<COutput> &vAvailableCoins, const CStateViewCache* inputs);
+    static bool JoinSingle(int index, const std::string &hiddenService, const CStateViewCache* inputs);
+    static bool JoinThread(const std::string &hiddenService, const CStateViewCache* inputs);
+    static bool JoinSingleV2(int index, std::vector<unsigned char> &vPublicKey, const CStateViewCache* inputs);
+    static bool JoinThreadV2(const std::vector<unsigned char> &vPublicKey, const CStateViewCache* inputs);
 
     static bool BuildCandidateTransaction(const CWalletTx *prevcoin, const int &prevout, const CStateViewCache* inputs, CandidateTransaction& tx);
 
